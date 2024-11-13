@@ -1,4 +1,4 @@
-# Basic LINQ Operators
+# LINQ Connectivity Steps
 ## Step 1: Database connectivity with console application
 Add following packages in Console Application
 **- Microsoft.EntityFrameworkCore.SqlServer**
