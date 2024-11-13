@@ -1,8 +1,10 @@
 # LINQ Connectivity Steps
 ## Step 1: Database connectivity with console application
 Add following packages in Console Application
-**- Microsoft.EntityFrameworkCore.SqlServer**
-**- Microsoft.EntityFrameworkCore.Tools**
+
+**-. Microsoft.EntityFrameworkCore.SqlServer**
+
+**-. Microsoft.EntityFrameworkCore.Tools**
 
 ## Step 2: Add Model class and ApplicationDbContext class files
 - Here we have used Employee model 
