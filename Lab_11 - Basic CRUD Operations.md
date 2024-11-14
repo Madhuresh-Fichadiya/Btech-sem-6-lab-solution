@@ -9,8 +9,7 @@
 - Course- CourseId, CourseName
 - Student - StudentId, Name, Enrollment, Semester
 - StudentCourse - StudentCourseId, StudentId, CourseId, EnrollDate, Grade
-
-```cshrap
+```csharp
 [Table("Courses")]
 public class Course
 {
