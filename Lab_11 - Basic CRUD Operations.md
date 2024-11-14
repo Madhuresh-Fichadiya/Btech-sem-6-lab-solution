@@ -24,13 +24,6 @@ public class Course
     public string CourseName { get; set; }
 
     #endregion
-
-    #region Navigation Properties
-
-    // Navigation property for many-to-many relationship with Student
-    public ICollection<StudentCourse> StudentCourses { get; set; }
-
-    #endregion
 }
 ```
 ```csharp
@@ -52,13 +45,6 @@ public class Student
 
     [Required]
     public int Semester { get; set; }
-
-    #endregion
-
-    #region Navigation Properties
-
-    // Navigation property for many-to-many relationship with Course
-    public ICollection<StudentCourse> StudentCourses { get; set; }
 
     #endregion
 }
@@ -85,13 +71,6 @@ public class StudentCourse
 
     [StringLength(2)]
     public string Grade { get; set; }
-
-    #endregion
-
-    #region Navigation Properties
-
-    public Student Student { get; set; }
-    public Course Course { get; set; }
 
     #endregion
 }
