@@ -32,7 +32,8 @@ public class Course
 
     #endregion
 }
-
+```
+```csharp
 [Table("Students")]
 public class Student
 {
@@ -61,7 +62,8 @@ public class Student
 
     #endregion
 }
-
+```
+```csharp
 [Table("StudentCourses")]
 public class StudentCourse
 {
