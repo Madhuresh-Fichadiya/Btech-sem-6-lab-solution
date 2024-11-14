@@ -1,5 +1,5 @@
 # Basic CRUD Operations using EF Core
-## Step 1: Add following packages
+## Step 1: Create a WebAPI project and add following packages
 **- Microsoft.EntityFrameworkCore.SqlServer**
 
 **- Microsoft.EntityFrameworkCore.Tools**
