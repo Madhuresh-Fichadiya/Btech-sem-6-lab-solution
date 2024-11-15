@@ -63,18 +63,18 @@ public class Student
         #endregion
     }
 ```
-## Step 2: Add Connection string in appSettings.json file
+## Step 3: Add Connection string in appSettings.json file
 ```csharp
 "ConnectionStrings": {
     "DefaultConnection": "Your_SQL_Server_Connection_String_Here"
 }
 ```
-## Step 3: Register ApplicationDbContext with dependency injection in Program.cs
+## Step 4: Register ApplicationDbContext with dependency injection in Program.cs
 ```csharp
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 ```
-## Step 4: Prepare ApplicationDbContext class
+## Step 5: Prepare ApplicationDbContext class
 Create a Data folder in root directory and add ApplicationDbContext inside Data folder.
 ```csharp
 public class ApplicationDbContext: DbContext
@@ -98,7 +98,7 @@ public class ApplicationDbContext: DbContext
     }
 }
 ```
-## Step 5: Add Migration to generate Database
+## Step 6: Add Migration to generate Database
 - run following commands in Package Manager Console
 ```csharp
 //Add-Migration MigrationName
@@ -108,7 +108,7 @@ Add-Migration InitialCommit
 Update-Database
 ```
 
-## Step 6: Add Controller and Implement CRUD
+## Step 7: Add Controller and Implement CRUD
 ```csharp
 [ApiController]
 [Route("api/[controller]/[action]")]
