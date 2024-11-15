@@ -83,4 +83,5 @@ public class StudentRepository: Repository<Student>
 
 ## Step 5: Register Repositories and DbContext (Dependency Injection (DI))
 - To use the repositories in the Web API controllers, we’ll register them in the Program.cs file
--* AddScoped() registers each repository with a scoped lifetime, ensuring that a new instance of the repository is created for each HTTP request.
+  
+> AddScoped() registers each repository with a scoped lifetime, ensuring that a new instance of the repository is created for each HTTP request.
