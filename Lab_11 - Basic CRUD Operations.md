@@ -98,7 +98,17 @@ public class ApplicationDbContext: DbContext
     }
 }
 ```
-## Step 5: Add Controller and Implement CRUD
+## Step 5: Add Migration to generate Database
+- run following commands in Package Manager Console
+```csharp
+//Add-Migration MigrationName
+Add-Migration InitialCommit
+
+//Update Database
+Update-Database
+```
+
+## Step 6: Add Controller and Implement CRUD
 ```csharp
 [ApiController]
 [Route("api/[controller]/[action]")]
