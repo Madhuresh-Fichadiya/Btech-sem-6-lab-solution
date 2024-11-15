@@ -81,7 +81,24 @@ public class StudentRepository: Repository<Student>
 }
 ```
 
-## Step 5: Register Repositories and DbContext (Dependency Injection (DI))
-- To use the repositories in the Web API controllers, we’ll register them in the Program.cs file
+## Step 5: Create Unit of Work
+Unit of Work will manage all the repositories at single place as described below:
+- First Create IUnitOfWork interface in IRepository folder
+```csharp
+
+```
+
+## Step 6: Configure Dependency Injection in Program.cs
+- Register both DbContext, Repository, and UnitOfWork in the DI container inside the Program.cs file
   
 > AddScoped() registers each repository with a scoped lifetime, ensuring that a new instance of the repository is created for each HTTP request.
+```csharp
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+```
+
+## Step 7: Modify Each controller as required
+- Let's modify our Student Controller to implement Repository pattern.
+```csharp
+
+```
