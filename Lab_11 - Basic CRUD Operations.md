@@ -8,7 +8,7 @@
 ## Step 2: Prepare Model classes
 - Course- CourseId, CourseName
 - Student - StudentId, Name, Enrollment, Semester
-- Course- DepartmentId, DepartmentName
+- Department- DepartmentId, DepartmentName
 ```csharp
 [Table("Courses")]
 public class Course
