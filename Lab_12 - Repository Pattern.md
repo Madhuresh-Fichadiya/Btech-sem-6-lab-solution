@@ -185,7 +185,7 @@ public class StudentController : ControllerBase
 
         try
         {
-            _unitOfWork.Students.Update(student);
+            await _unitOfWork.Students.Update(student);
             await _unitOfWork.Save();
         }
         catch (Exception)
@@ -207,7 +207,7 @@ public class StudentController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Student>> Add(Student student)
     {
-        _unitOfWork.Students.Add(student);
+        await _unitOfWork.Students.Add(student);
         await _unitOfWork.Save();
 
         return CreatedAtAction("GetByID", new { id = student.StudentId }, student);
@@ -223,7 +223,7 @@ public class StudentController : ControllerBase
             return NotFound();
         }
 
-        _unitOfWork.Students.Delete(id);
+        await _unitOfWork.Students.Delete(id);
         await _unitOfWork.Save();
 
         return NoContent();
