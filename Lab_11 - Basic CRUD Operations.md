@@ -49,7 +49,7 @@ public class Student
 }
 ```
 ```csharp
-[[Table("Departments")]
+[Table("Departments")]
     public class Department
     {
         #region Properties
