@@ -8,7 +8,7 @@
 ## Step 2: Prepare Model classes
 - Course- CourseId, CourseName
 - Student - StudentId, Name, Enrollment, Semester
-- StudentCourse - StudentCourseId, StudentId, CourseId, EnrollDate, Grade
+- Course- DepartmentId, DepartmentName
 ```csharp
 [Table("Courses")]
 public class Course
@@ -49,30 +49,19 @@ public class Student
 }
 ```
 ```csharp
-[Table("StudentCourses")]
-public class StudentCourse
-{
-    #region Properties
+[[Table("Departments")]
+    public class Department
+    {
+        #region Properties
 
-    [Key]
-    public int StudentCourseId { get; set; }
+        [Key]
+        public int DepartmentId { get; set; }
 
-    [Required]
-    [ForeignKey("Student")]
-    public int StudentId { get; set; }
-
-    [Required]
-    [ForeignKey("Course")]
-    public int CourseId { get; set; }
-
-    [Required]
-    public DateTime EnrollDate { get; set; }
-
-    [StringLength(2)]
-    public string Grade { get; set; }
-
-    #endregion
-}
+        [Required]
+        [StringLength(100)]
+        public string DepartmentName { get; set; }
+        #endregion
+    }
 ```
 ## Step 2: Add Connection string in appSettings.json file
 ```csharp
@@ -99,7 +88,7 @@ public class ApplicationDbContext: DbContext
     // DbSet properties represent collections of the entities.
     public DbSet<Course> Courses { get; set; }
     public DbSet<Student> Students { get; set; }
-    public DbSet<StudentCourse> StudentCourses { get; set; }
+    public DbSet<Department> Departments { get; set; }
 
     // Configure the database connection string.
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
