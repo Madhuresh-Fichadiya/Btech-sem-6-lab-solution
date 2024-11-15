@@ -61,10 +61,19 @@ public class Repository<T> : IRepository<T> where T : class
 ## Step 4: Implement Specific Repositories
 
 - If we have specific queries or complex logic for certain entities, we can implement specific repositories by inheriting the generic repository.
-- Here’s an example for the StudentRepository.
+- First implement the interface for individual entities which contains additional method (other than CRUD) declaration.
 
 ```csharp
-public class StudentRepository: Repository<Student>
+public interface IStudentRepository:IRepository<Student>
+{
+    public Task<IEnumerable<Student>> GetStudentByFilterParamsAsync(int? CourseID, int? DepartmentID);
+    public bool Exists(int id);
+}
+
+- Next Implement the Repository with the Interface 
+```
+```csharp
+public class StudentRepository: Repository<Student>, IStudentRepository
 {
     public StudentRepository(ApplicationDbContext context) : base(context)
     {
@@ -78,6 +87,11 @@ public class StudentRepository: Repository<Student>
                 (!DepartmentID.HasValue || x.DepartmentID == CourseID)  // Check DepartmentID if present
                 ).ToListAsync();
     }
+
+    public bool Exists(int id)
+    { 
+        return _context.Students.Any(x=>x.StudentId.Equals(id));
+    }
 }
 ```
 
@@ -85,7 +99,35 @@ public class StudentRepository: Repository<Student>
 Unit of Work will manage all the repositories at single place as described below:
 - First Create IUnitOfWork interface in IRepository folder
 ```csharp
+public interface IUnitOfWork
+{
+    IStudentRepository Students { get; }
+    IRepository<Course> Courses { get; } // create entity for course if required and replace with generic repository
+    IRepository<Department> Departments { get; } // create entity for department if required and replace with generic repository
+    Task<int> Save();
+}
+```
+- Next implment the inteface
+```csharp
+public class UnitOfWork : IUnitOfWork
+{
+    protected readonly ApplicationDbContext _context;
+    public IStudentRepository Students { get; private set; }
+    public IRepository<Course> Courses { get; private set; }
+    public IRepository<Department> Departments { get; private set; }
 
+    public UnitOfWork(ApplicationDbContext context)
+    {
+        _context = context;
+        Students = new StudentRepository(_context);
+        Courses = new Repository<Course>(_context);
+        Departments = new Repository<Department>(_context);
+    }
+    public async Task<int> Save()
+    {
+        return await _context.SaveChangesAsync();
+    }
+}
 ```
 
 ## Step 6: Configure Dependency Injection in Program.cs
@@ -100,5 +142,92 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 ## Step 7: Modify Each controller as required
 - Let's modify our Student Controller to implement Repository pattern.
 ```csharp
+[ApiController]
+[Route("api/[controller]/[action]")]
+public class StudentController : ControllerBase
+{
+    // Inject ApplicationDbContext class dependency
+    private readonly IUnitOfWork _unitOfWork;
+    public StudentController(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
 
+    // GET: api/Students/GetAll
+    [HttpGet]
+    public async Task<Object> GetAll()
+    {
+        return await _unitOfWork.Students.GetAll();
+    }
+
+    // GET: api/Students/GetByID/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Student>> GetByID(int id)
+    {
+        var student = await _unitOfWork.Students.GetById(id);
+
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        return student;
+    }
+
+    // PUT: api/Students/UpdateByPK/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateByPK(int id, Student student)
+    {
+        if (id != student.StudentId)
+        {
+            return BadRequest();
+        }
+
+        try
+        {
+            _unitOfWork.Students.Update(student);
+            await _unitOfWork.Save();
+        }
+        catch (Exception)
+        {
+            if (!_unitOfWork.Students.Exists(id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
+
+    // POST: api/Students/Add
+    [HttpPost]
+    public async Task<ActionResult<Student>> Add(Student student)
+    {
+        _unitOfWork.Students.Add(student);
+        await _unitOfWork.Save();
+
+        return CreatedAtAction("GetByID", new { id = student.StudentId }, student);
+    }
+
+    // DELETE: api/Students/DeleteByPK/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteByPK(int id)
+    {
+        var student = await _unitOfWork.Students.GetById(id);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        _unitOfWork.Students.Delete(id);
+        await _unitOfWork.Save();
+
+        return NoContent();
+    }
+
+}
 ```
