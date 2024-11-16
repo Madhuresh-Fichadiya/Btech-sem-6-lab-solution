@@ -1,4 +1,4 @@
-# Basic LINQ Operators
+# Repository Pattern
 ## Step 1: Prepare folder sturucture
 - Create a Infrastructure folder inside root directory.
 - Create IRepository and Repository folders inside Infrastructure folder.
