@@ -1,5 +1,5 @@
-#How to Build Custom Tag Helper
-##Step 1: Create a `AlertTagHelper` class
+# How to Build Custom Tag Helper
+## Step 1: Create a `AlertTagHelper` class
 We need to inherit `TagHelper` class to our `AlertTagHelper` class and implement it as follows.
 - `[HtmlTargetElement("alert")]` - Specifies that this tag helper will target <alert> elements in Razor views.
 - `Type` - Defines a property Type that specifies the type of the alert (e.g., success, warning, info, etc.).
@@ -22,8 +22,7 @@ public class AlertTagHelper : TagHelper
     }
 }
 ```
-
-##Step 2: Register the namespace of `AlertTagHelper` class in `_ViewImport.cshtml`
+## Step 2: Register the namespace of `AlertTagHelper` class in `_ViewImport.cshtml`
 ```csharp
 @addTagHelper *, namespaceOfCustomTagHelper
 ```
