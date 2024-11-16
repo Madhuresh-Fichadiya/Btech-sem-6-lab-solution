@@ -26,3 +26,11 @@ public class AlertTagHelper : TagHelper
 ```csharp
 @addTagHelper *, namespaceOfCustomTagHelper
 ```
+
+## Step 3: Use the custom tag helper as required.
+- We can use the alert tag helper as shown below. also can conditionaly render messages for CRUD operation.
+```csharp
+<alert message="This is success message" type="success"></alert>
+<alert message="This is danger message" type="danger"></alert>
+<alert message="This is warning message" type="warning"></alert>
+```
