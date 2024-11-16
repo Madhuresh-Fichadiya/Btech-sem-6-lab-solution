@@ -69,9 +69,8 @@ public interface IStudentRepository:IRepository<Student>
     public Task<IEnumerable<Student>> GetStudentByFilterParamsAsync(int? CourseID, int? DepartmentID);
     public bool Exists(int id);
 }
-
-- Next Implement the Repository with the Interface 
 ```
+- Next Implement the Repository with the Interface 
 ```csharp
 public class StudentRepository: Repository<Student>, IStudentRepository
 {
