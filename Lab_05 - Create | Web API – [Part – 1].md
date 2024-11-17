@@ -52,6 +52,7 @@ namespace CityAPI.Models
     {
         public int CityID { get; set; }
         public int StateID { get; set; }
+        public int CountryID { get; set; }
         public string CityName { get; set; }
         public string CityCode { get; set; }
     }
@@ -98,6 +99,7 @@ namespace CityAPI.Data
                     {
                         CityID = Convert.ToInt32(reader["CityID"]),
                         StateID = Convert.ToInt32(reader["StateID"]),
+                        CountryID = Convert.ToInt32(reader["CountryID"]),
                         CityName = reader["CityName"].ToString(),
                         CityCode = reader["CityCode"].ToString()
                     });
@@ -124,6 +126,7 @@ namespace CityAPI.Data
                     {
                         CityID = Convert.ToInt32(reader["CityID"]),
                         StateID = Convert.ToInt32(reader["StateID"]),
+                        CountryID = Convert.ToInt32(reader["CountryID"]),
                         CityName = reader["CityName"].ToString(),
                         CityCode = reader["CityCode"].ToString()
                     };
@@ -247,7 +250,7 @@ app.Run();
 CREATE PROCEDURE PR_LOC_City_SelectAll
 AS
 BEGIN
-    SELECT CityID, StateID, CityName, CityCode
+    SELECT CityID, StateID, CountryID, CityName, CityCode
     FROM Cities
 END
 ```
@@ -259,7 +262,7 @@ CREATE PROCEDURE PR_LOC_City_SelectByPK
     @CityID INT
 AS
 BEGIN
-    SELECT CityID, StateID, CityName, CityCode
+    SELECT CityID, StateID, CountryID, CityName, CityCode
     FROM Cities
     WHERE CityID = @CityID
 END
