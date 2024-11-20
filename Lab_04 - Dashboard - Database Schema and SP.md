@@ -68,7 +68,9 @@ AS
 BEGIN
     -- Enable NOCOUNT for better performance
     SET NOCOUNT ON;
-
+-- SET NOCOUNT ON: Suppresses the message from being returned. This prevents the sending of DONEINPROC messages to the client for each
+-- statement in a stored procedure.
+-- SET NOCOUNT OFF: Includes the message in the result set. 
     -- Temporary tables for organized data fetching
 	CREATE TABLE #Counts (
         Metric NVARCHAR(255),
