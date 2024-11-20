@@ -1,4 +1,38 @@
+### **Add jQuery CDN in the Layout (_Layout.cshtml)**
+If your project uses a shared layout file (`_Layout.cshtml`), add the jQuery CDN link inside the `<head>` or just before the closing `</body>` tag for global availability:
 
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - YourAppName</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    @RenderBody()
+</body>
+</html>
+```
+
+---
+
+### **Add jQuery CDN in the Specific View**
+If you only want jQuery available in the `City Add/Edit` view, add the CDN link inside the `Scripts` section:
+
+```html
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Add your jQuery code here...
+            alert("jQuery loaded successfully!");
+        });
+    </script>
+}
+```
+
+---
 ### **Step 1: Apply All jQuery Selectors**
 We’ll add functionality using jQuery selectors (`<p>`, `<ul>`, `<li>`, `<a>`, `<tr>`, `<button>`).
 
