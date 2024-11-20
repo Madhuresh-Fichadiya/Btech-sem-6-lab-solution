@@ -1,5 +1,5 @@
 # Repository Pattern
-Basic Repo Idea
+##Basic Repo Idea
 <img src ="https://procodeguide.com/wp-content/uploads/2021/07/Repository-Pattern-in-ASP.NET-Core-Unit-of-Work-1024x432.png">
 
 ## Step 1: Prepare folder sturucture
