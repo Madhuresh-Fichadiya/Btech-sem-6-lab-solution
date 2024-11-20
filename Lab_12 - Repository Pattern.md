@@ -1,6 +1,6 @@
 # Repository Pattern
 Basic Repo Idea
-[https://procodeguide.com/wp-content/uploads/2021/07/Repository-Pattern-in-ASP.NET-Core-Unit-of-Work-1024x432.png]
+(https://procodeguide.com/wp-content/uploads/2021/07/Repository-Pattern-in-ASP.NET-Core-Unit-of-Work-1024x432.png)
 
 ## Step 1: Prepare folder sturucture
 - Create a Infrastructure folder inside root directory.
