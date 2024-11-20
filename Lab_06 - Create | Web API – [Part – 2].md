@@ -1,49 +1,56 @@
-# Create | Web API – [Part – 2]  
-### Steps for Insert, Update, DDL (Use Table City)  
+# Create | Web API – [Part – 2]
 
+### Steps for Insert, Update, DDL (Use Table City)
 
-## Prerequisites  
-**Database Setup**  
-   - Ensure the `City` table exists with fields: `CityID (PK, Auto Increment)`, `StateID`, `CountryID`, `CityName`, `CityCode`, `Created`, `Modified`.  
-   - Add stored procedures for data operations:
-     - `PR_LOC_City_Insert`
-     - `PR_LOC_City_Update`
-     - `PR_LOC_Country_SelectComboBox`
-     - `PR_LOC_State_SelectComboBoxByCountryID`  
+## Prerequisites
 
+**Database Setup**
 
-## Steps  
+- Ensure the `City` table exists with fields: `CityID (PK, Auto Increment)`, `StateID`, `CountryID`, `CityName`, `CityCode`, `Created`, `Modified`.
+- Add stored procedures for data operations:
+  - `PR_LOC_City_Insert`
+  - `PR_LOC_City_Update`
+  - `PR_LOC_Country_SelectComboBox`
+  - `PR_LOC_State_SelectComboBoxByCountryID`
 
-### 1. **Create Repository Layer**  
+## Steps
 
-#### Insert Method:  
-Inserts a new city into the database.  
+### 1. **Create Repository Layer**
+
+#### Insert Method:
+
+Inserts a new city into the database.
+
 ```csharp
-public bool Insert(CityModel city)
-{
-    using (SqlConnection conn = new SqlConnection(_connectionString))
-    {
-        SqlCommand cmd = new SqlCommand("PR_LOC_City_Insert", conn)
-        {
-            CommandType = CommandType.StoredProcedure
-        };
+ public bool Insert(CityModel city)
+ {
+     using (SqlConnection conn = new SqlConnection(_connectionString))
+     {
+         SqlCommand cmd = new SqlCommand("PR_LOC_City_Insert", conn)
+         {
+             CommandType = CommandType.StoredProcedure
+         };
 
-        cmd.Parameters.AddWithValue("@StateID", city.StateID);
-        cmd.Parameters.AddWithValue("@CountryID", city.CountryID);
-        cmd.Parameters.AddWithValue("@CityName", city.CityName);
-        cmd.Parameters.AddWithValue("@CityCode", city.CityCode);
-        cmd.Parameters.Add("@Created", SqlDbType.DateTime).Value = DBNull.Value;
-        cmd.Parameters.Add("@Modified", SqlDbType.DateTime).Value = DBNull.Value;
+         cmd.Parameters.AddWithValue("@StateID", city.StateID);
+         cmd.Parameters.AddWithValue("@CountryID", city.CountryID);
+         cmd.Parameters.AddWithValue("@CityName", city.CityName);
+         cmd.Parameters.AddWithValue("@CityCode", city.CityCode);
+         cmd.Parameters.AddWithValue("@Created", DateTime.Now); // Ensure @Created is provided
+         cmd.Parameters.AddWithValue("@Modified", DateTime.Now); // Ensure @Modified is provided
 
-        conn.Open();
-        int rowsAffected = cmd.ExecuteNonQuery();
-        return rowsAffected > 0;
-    }
-}
-```  
+         conn.Open();
+         int rowsAffected = cmd.ExecuteNonQuery(); // Execute the stored procedure
 
-#### Update Method:  
-Updates an existing city in the database.  
+         // Return true if the insertion was successful
+         return rowsAffected > 0;
+     }
+ }
+```
+
+#### Update Method:
+
+Updates an existing city in the database.
+
 ```csharp
 public bool Update(CityModel city)
 {
@@ -53,10 +60,9 @@ public bool Update(CityModel city)
         {
             CommandType = CommandType.StoredProcedure
         };
-
         cmd.Parameters.AddWithValue("@CityID", city.CityID);
         cmd.Parameters.AddWithValue("@StateID", city.StateID);
-        cmd.Parameters.AddWithValue("@CountryID", city.CountryID);
+        cmd.Parameters.AddWithValue("@CountryID", city.CountryID); // New parameter
         cmd.Parameters.AddWithValue("@CityName", city.CityName);
         cmd.Parameters.AddWithValue("@CityCode", city.CityCode);
         cmd.Parameters.Add("@Modified", SqlDbType.DateTime).Value = DBNull.Value;
@@ -66,13 +72,17 @@ public bool Update(CityModel city)
         return rowsAffected > 0;
     }
 }
-```  
+```
 
-#### GetCountries Method:  
-Fetches the list of countries for dropdowns.  
+#### GetCountries Method:
+
+Fetches the list of countries for dropdowns.
+
 ```csharp
-public IEnumerable<dynamic> GetCountries()
+public IEnumerable<CountryDropDownModel> GetCountries()
 {
+    var countries = new List<CountryDropDownModel>();
+
     using (SqlConnection conn = new SqlConnection(_connectionString))
     {
         SqlCommand cmd = new SqlCommand("PR_LOC_Country_SelectComboBox", conn)
@@ -82,21 +92,30 @@ public IEnumerable<dynamic> GetCountries()
 
         conn.Open();
         SqlDataReader reader = cmd.ExecuteReader();
-        var countries = new List<dynamic>();
+
         while (reader.Read())
         {
-            countries.Add(new { CountryID = reader["CountryID"], CountryName = reader["CountryName"] });
+            countries.Add(new CountryDropDownModel
+            {
+                CountryID = Convert.ToInt32(reader["CountryID"]),
+                CountryName = reader["CountryName"].ToString()
+            });
         }
-        return countries;
     }
-}
-```  
 
-#### GetStatesByCountryID Method:  
-Fetches the list of states by `CountryID` for dropdowns.  
+    return countries;
+}
+```
+
+#### GetStatesByCountryID Method:
+
+Fetches the list of states by `CountryID` for dropdowns.
+
 ```csharp
-public IEnumerable<dynamic> GetStatesByCountryID(int countryID)
+public IEnumerable<StateDropDownModel> GetStatesByCountryID(int countryID)
 {
+    var states = new List<StateDropDownModel>();
+
     using (SqlConnection conn = new SqlConnection(_connectionString))
     {
         SqlCommand cmd = new SqlCommand("PR_LOC_State_SelectComboBoxByCountryID", conn)
@@ -107,21 +126,27 @@ public IEnumerable<dynamic> GetStatesByCountryID(int countryID)
 
         conn.Open();
         SqlDataReader reader = cmd.ExecuteReader();
-        var states = new List<dynamic>();
+
         while (reader.Read())
         {
-            states.Add(new { StateID = reader["StateID"], StateName = reader["StateName"] });
+            states.Add(new StateDropDownModel
+            {
+                StateID = Convert.ToInt32(reader["StateID"]),
+                StateName = reader["StateName"].ToString()
+            });
         }
-        return states;
     }
+
+    return states;
 }
-```  
+```
 
 ---
 
-### 2. **Create Controller Methods**  
+### 2. **Create Controller Methods**
 
-#### Insert API:  
+#### Insert API:
+
 ```csharp
 [HttpPost]
 public IActionResult InsertCity([FromBody] CityModel city)
@@ -136,9 +161,10 @@ public IActionResult InsertCity([FromBody] CityModel city)
 
     return StatusCode(500, "An error occurred while inserting the city.");
 }
-```  
+```
 
-#### Update API:  
+#### Update API:
+
 ```csharp
 [HttpPut("{id}")]
 public IActionResult UpdateCity(int id, [FromBody] CityModel city)
@@ -152,35 +178,48 @@ public IActionResult UpdateCity(int id, [FromBody] CityModel city)
 
     return NoContent();
 }
-```  
+```
 
-#### Fetch Countries API:  
+#### Fetch Countries API:
+
 ```csharp
 [HttpGet("countries")]
 public IActionResult GetCountries()
 {
     var countries = _cityRepository.GetCountries();
+    if (!countries.Any())
+        return NotFound("No countries found.");
+
     return Ok(countries);
 }
-```  
+```
 
-#### Fetch States by Country ID API:  
+#### Fetch States by Country ID API:
+
 ```csharp
 [HttpGet("states/{countryID}")]
 public IActionResult GetStatesByCountryID(int countryID)
 {
+    if (countryID <= 0)
+        return BadRequest("Invalid CountryID.");
+
     var states = _cityRepository.GetStatesByCountryID(countryID);
+    if (!states.Any())
+        return NotFound("No states found for the given CountryID.");
+
     return Ok(states);
 }
-```  
+```
 
 ---
 
-### 3. **Test the APIs**  
+### 3. **Test the APIs**
 
-#### Insert Request:  
+#### Insert Request:
+
 **POST** `/api/city`  
-Body:  
+Body:
+
 ```json
 {
   "cityID": 0,
@@ -189,11 +228,13 @@ Body:
   "cityName": "New City",
   "cityCode": "NC001"
 }
-```  
+```
 
-#### Update Request:  
+#### Update Request:
+
 **PUT** `/api/city/{id}`  
-Body:  
+Body:
+
 ```json
 {
   "cityID": 1,
@@ -202,19 +243,22 @@ Body:
   "cityName": "Updated City",
   "cityCode": "UC002"
 }
-```  
+```
 
-#### Fetch Countries:  
-**GET** `/api/city/countries`  
+#### Fetch Countries:
 
-#### Fetch States by Country ID:  
-**GET** `/api/city/states/1067`  
+**GET** `/api/city/countries`
+
+#### Fetch States by Country ID:
+
+**GET** `/api/city/states/1067`
 
 ---
 
-### 4. **Database Stored Procedures**  
+### 4. **Database Stored Procedures**
 
-#### Insert Procedure:  
+#### Insert Procedure:
+
 ```sql
 CREATE PROCEDURE PR_LOC_City_Insert
     @CityName   VARCHAR(50),
@@ -230,7 +274,8 @@ BEGIN
 END;
 ```
 
-#### Update Procedure:  
+#### Update Procedure:
+
 ```sql
 CREATE PROCEDURE PR_LOC_City_Update
     @CityID     INT,
