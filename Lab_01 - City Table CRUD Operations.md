@@ -530,29 +530,6 @@ namespace Lab14.Areas.City.Controllers
                 <span asp-validation-for="CountryID" class="text-danger"></span>
               </div>
             </div>
-
-            @*
-            <div class="form-group">
-              <label for="StateID" class="col-md-3 control-label"
-                ><span class="text-danger">*</span>State Name</label
-              >
-              <div class="col-md-9">
-                <select
-                  id="StateID"
-                  name="StateID"
-                  class="form-control"
-                  asp-for="StateID"
-                >
-                  <option value="">Select State</option>
-                  @if (ViewBag.StateList != null) { foreach (var state in
-                  ViewBag.StateList) {
-                  <option value="@state.StateID">@state.StateName</option>
-                  } }
-                </select>
-                <span asp-validation-for="StateID" class="text-danger"></span>
-              </div>
-            </div>
-            *@
             <div class="form-group">
               <label for="StateID" class="col-md-3 control-label"
                 ><span class="text-danger">*</span>State Name</label
