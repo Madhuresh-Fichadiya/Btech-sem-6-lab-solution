@@ -192,6 +192,62 @@ END
 ```
 
 ---
+### Get All Countries
+
+```sql
+CREATE PROCEDURE [dbo].[PR_LOC_Country_SelectComboBox]
+AS 
+SELECT
+    COUNTRYID,
+    COUNTRYNAME
+FROM COUNTRY
+ORDER BY COUNTRYNAME
+```
+
+---
+
+### Get States by Country ID
+
+```sql
+CREATE PROCEDURE [dbo].[PR_LOC_State_SelectComboBoxByCountryID]
+@CountryID INT
+AS 
+SELECT
+    [dbo].[State].[StateID],
+    [dbo].[State].[StateName]
+FROM [dbo].[State]
+WHERE [dbo].[State].[CountryID] = @CountryID
+```
+
+---
+
+### Example of Using the Stored Procedures
+
+- **Get All Countries:**
+   To retrieve the list of all countries, you can call the `PR_LOC_Country_SelectComboBox` stored procedure, which will return the `CountryID` and `CountryName` for each country, ordered by `CountryName`.
+
+   ```sql
+   EXEC [dbo].[PR_LOC_Country_SelectComboBox]
+   ```
+
+- **Get States by Country ID:**
+   To retrieve the list of states for a specific country, you can call the `PR_LOC_State_SelectComboBoxByCountryID` stored procedure, passing the `CountryID` as a parameter.
+
+   ```sql
+   EXEC [dbo].[PR_LOC_State_SelectComboBoxByCountryID @CountryID = 1]
+   ```
+
+---
+
+### Usage Example in a Project
+
+1. **Dropdown Population for Country:**
+   When loading a form with country selection, you can use the `PR_LOC_Country_SelectComboBox` stored procedure to populate a country dropdown list.
+
+2. **Dropdown Population for State:**
+   When a country is selected, you can use the `PR_LOC_State_SelectComboBoxByCountryID` stored procedure to dynamically load states based on the selected country.
+
+---
 
 ## Model Code
 
@@ -236,30 +292,27 @@ public class CityModel
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
-using Lab14.City.Models;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Lab14.LOC_State.Models;
+using System.Data;
+using CoffeeShop.Models;
 
-namespace Lab14.Areas.City.Controllers
+namespace CoffeeShop.Controllers
 {
     public class CityController : Controller
     {
         private readonly IConfiguration _configuration;
 
+        #region configuration
         public CityController(IConfiguration configuration)
         {
             _configuration = configuration;
         }
+        #endregion
 
         #region Index
         public IActionResult Index()
         {
-            string connectionstr = this._configuration.GetConnectionString("myConnectionString");
+            string connectionstr = this._configuration.GetConnectionString("ConnectionString");
             //PrePare a connection
             DataTable dt = new DataTable();
             SqlConnection conn = new SqlConnection(connectionstr);
@@ -273,18 +326,37 @@ namespace Lab14.Areas.City.Controllers
             SqlDataReader objSDR = objCmd.ExecuteReader();
             dt.Load(objSDR);
             conn.Close();
-            return View("LOC_City\\Views\\City\\Index.cshtml", dt);
+            return View("Index", dt);
+        }
+        #endregion
+
+        #region Delete
+        public IActionResult Delete(int CityID)
+        {
+            string connectionstr = _configuration.GetConnectionString("ConnectionString");
+            using (SqlConnection conn = new SqlConnection(connectionstr))
+            {
+                conn.Open();
+                using (SqlCommand sqlCommand = conn.CreateCommand())
+                {
+                    sqlCommand.CommandType = CommandType.StoredProcedure;
+                    sqlCommand.CommandText = "PR_LOC_City_Delete";
+                    sqlCommand.Parameters.AddWithValue("@CityID", CityID);
+                    sqlCommand.ExecuteNonQuery();
+                }
+            }
+            return RedirectToAction("Index");
         }
         #endregion
 
         #region Add
-        public IActionResult Add(int? CityID)
+        public IActionResult CityAddEdit(int? CityID)
         {
             LoadCountryList();
 
             if (CityID.HasValue)
             {
-                string connectionstr = _configuration.GetConnectionString("myConnectionString");
+                string connectionstr = _configuration.GetConnectionString("ConnectionString");
                 DataTable dt = new DataTable();
                 using (SqlConnection conn = new SqlConnection(connectionstr))
                 {
@@ -313,14 +385,13 @@ namespace Lab14.Areas.City.Controllers
                         model.CountryID = Convert.ToInt32(dr["CountryID"]);
                         model.CityCode = dr["CityCode"].ToString();
                         ViewBag.StateList = GetStateByCountryID(model.CountryID);
-
                     }
                     GetStatesByCountry(model.CountryID);
-                    return View("LOC_City\\Views\\City\\CityAddEdit.cshtml", model);
+                    return View("CityAddEdit", model);
                 }
             }
 
-            return View("LOC_City\\Views\\City\\CityAddEdit.cshtml");
+            return View("CityAddEdit");
         }
         #endregion
 
@@ -330,7 +401,7 @@ namespace Lab14.Areas.City.Controllers
         {
             if (ModelState.IsValid)
             {
-                string connectionstr = _configuration.GetConnectionString("myConnectionString");
+                string connectionstr = _configuration.GetConnectionString("ConnectionString");
                 using (SqlConnection conn = new SqlConnection(connectionstr))
                 {
                     conn.Open();
@@ -341,7 +412,6 @@ namespace Lab14.Areas.City.Controllers
                         if (modelCity.CityID == null)
                         {
                             objCmd.CommandText = "PR_LOC_City_Insert";
-                            objCmd.Parameters.Add("@Created", SqlDbType.DateTime).Value = DBNull.Value;
                         }
                         else
                         {
@@ -353,7 +423,6 @@ namespace Lab14.Areas.City.Controllers
                         objCmd.Parameters.Add("@CityCode", SqlDbType.VarChar).Value = modelCity.CityCode;
                         objCmd.Parameters.Add("@StateID", SqlDbType.Int).Value = modelCity.StateID;
                         objCmd.Parameters.Add("@CountryID", SqlDbType.Int).Value = modelCity.CountryID;
-                        objCmd.Parameters.Add("@Modified", SqlDbType.DateTime).Value = DBNull.Value;
 
 
                         objCmd.ExecuteNonQuery();
@@ -365,33 +434,14 @@ namespace Lab14.Areas.City.Controllers
             }
 
             LoadCountryList();
-            return View("LOC_City\\Views\\City\\CityAddEdit.cshtml", modelCity);
-        }
-        #endregion
-
-        #region Delete
-        public IActionResult Delete(int CityID)
-        {
-            string connectionstr = _configuration.GetConnectionString("myConnectionString");
-            using (SqlConnection conn = new SqlConnection(connectionstr))
-            {
-                conn.Open();
-                using (SqlCommand sqlCommand = conn.CreateCommand())
-                {
-                    sqlCommand.CommandType = CommandType.StoredProcedure;
-                    sqlCommand.CommandText = "PR_LOC_City_Delete";
-                    sqlCommand.Parameters.AddWithValue("@CityID", CityID);
-                    sqlCommand.ExecuteNonQuery();
-                }
-            }
-            return RedirectToAction("Index");
+            return View("CityAddEdit", modelCity);
         }
         #endregion
 
         #region LoadCountryList
         private void LoadCountryList()
         {
-            string connectionstr = _configuration.GetConnectionString("myConnectionString");
+            string connectionstr = _configuration.GetConnectionString("ConnectionString");
             DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(connectionstr))
             {
@@ -434,7 +484,7 @@ namespace Lab14.Areas.City.Controllers
         #region GetStateByCountryID
         public List<StateDropDownModel> GetStateByCountryID(int CountryID)
         {
-            string connectionstr = _configuration.GetConnectionString("myConnectionString");
+            string connectionstr = _configuration.GetConnectionString("ConnectionString");
             List<StateDropDownModel> loc_State = new List<StateDropDownModel>();
 
             using (SqlConnection conn = new SqlConnection(connectionstr))
@@ -466,9 +516,9 @@ namespace Lab14.Areas.City.Controllers
             return loc_State;
         }
         #endregion
-
     }
 }
+
 
 ```
 
@@ -485,63 +535,66 @@ namespace Lab14.Areas.City.Controllers
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a asp-controller="HomeMaster" asp-action="Index">
-                    <i class="fa fa-home"></i> Home
-                </a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">City List</li>
-        </ol>
-    </nav>
-
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">City List</h5>
-            <a asp-controller="City" asp-action="Add" class="btn btn-success">Add New City</a>
+<main id="main" class="main">
+    <div class="pagetitle">
+        <h1>City</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="HomeMaster" asp-action="Index">
+                        <i class="fa fa-home"></i>
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">City List</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-end align-items-center">
+            <a class="btn btn-outline-primary" asp-controller="City" asp-action="CityAddEdit">
+                <i class="bi bi-plus-lg"></i>&nbsp;Add City
+            </a>
         </div>
+    </div><!-- End Page Title -->
 
-        <div class="card-body">
-            @if (TempData["CityInsertMsg"] != null)
-            {
-                <div class="alert alert-success">
-                    @TempData["CityInsertMsg"]
-                </div>
-            }
-
-            <div class="mb-3">
-                <input type="text" class="form-control" id="citySearch" placeholder="Search Any">
-            </div>
-
-            <table class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>City Name</th>
-                        <th>State Name</th>
-                        <th>Country Name</th>
-                        <th class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="cityTable">
-                    @foreach (DataRow row in Model.Rows)
-                    {
-                        <tr>
-                            <td>@row["CityName"]</td>
-                            <td>@row["StateName"]</td>
-                            <td>@row["CountryName"]</td>
-                            <td class="text-center">
-                                <a asp-controller="City" asp-action="Add" asp-route-CityID="@row["CityID"]" class="btn btn-sm btn-info">Edit</a>
-                                <a asp-controller="City" asp-action="Delete" asp-route-CityID="@row["CityID"]" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this city?');">Delete</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    @if (TempData["CityInsertMsg"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["CityInsertMsg"]
         </div>
+    }
+
+    <div class="mb-3">
+        <input type="text" class="form-control" id="citySearch" placeholder="Search Any">
     </div>
-</div>
+
+    <table class="table table-hover table-header-fixed">
+        <thead>
+            <tr>
+                <th scope="col">City Name</th>
+                <th scope="col">State Name</th>
+                <th scope="col">Country Name</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="cityTable">
+            @foreach (DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["CityName"]</td>
+                    <td>@row["StateName"]</td>
+                    <td>@row["CountryName"]</td>
+                    <td class="text-center">
+                        <a class="btn btn-outline-success btn-xs" asp-controller="City" asp-action="CityAddEdit" asp-route-CityID="@row["CityID"]">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <a class="btn btn-outline-danger btn-xs" asp-controller="City" asp-action="Delete" asp-route-CityID="@row["CityID"]" onclick="return confirm('Are you sure you want to delete this city?');">
+                            <i class="bi bi-x"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</main>
 
 @section Scripts {
     <script>
@@ -561,166 +614,161 @@ namespace Lab14.Areas.City.Controllers
 ### CityAddEdit.cshtml
 
 ```html
-@{ ViewData["Title"] = "City Add/Edit"; Layout =
-"~/Views/Shared/_Layout.cshtml"; } @model Lab14.City.Models.CityModel
+@{
+    ViewData["Title"] = "City Add/Edit"; Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
+@model CoffeeShop.Models.CityModel
+
+
+<main id="main" class="main">
 <div class="container">
-  <div class="row">
-    <div class="col-md-12">
-      <div class="page-header">
-        <h1>City Add/Edit</h1>
-      </div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-md-12">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h3 class="panel-title">City Add/Edit</h3>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="page-header">
+                <h1>City Add/Edit</h1>
+            </div>
         </div>
-        <div class="panel-body">
-          <h4 class="text-success">@TempData["CityInsertMessage"]</h4>
-          <form
-            class="form-horizontal"
-            role="form"
-            method="post"
-            asp-controller="City"
-            asp-action="Save"
-          >
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            @Html.HiddenFor(x => x.CityID)
-
-            <div class="form-group">
-              <label for="CountryID" class="col-md-3 control-label"
-                ><span class="text-danger">*</span>Country Name</label
-              >
-              <div class="col-md-9">
-                <select
-                  id="CountryID"
-                  name="CountryID"
-                  class="form-control"
-                  asp-for="CountryID"
-                >
-                  <option value="">Select Country</option>
-                  @foreach (var country in ViewBag.CountryList) {
-                  <option value="@country.CountryID">
-                    @country.CountryName
-                  </option>
-                  }
-                </select>
-                <span asp-validation-for="CountryID" class="text-danger"></span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="StateID" class="col-md-3 control-label"
-                ><span class="text-danger">*</span>State Name</label
-              >
-              <div class="col-md-9">
-                <select
-                  id="StateID"
-                  name="StateID"
-                  class="form-control"
-                  asp-for="StateID"
-                >
-                  <option value="">Select State</option>
-                  @if (ViewBag.StateList != null) { foreach (var state in
-                  ViewBag.StateList) { if (state.StateID == Model.StateID) {
-                  <option value="@state.StateID">@state.StateName</option>
-                  } else {
-                  <option value="@state.StateID">@state.StateName</option>
-                  } } }
-                </select>
-                <span asp-validation-for="StateID" class="text-danger"></span>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="CityName" class="col-md-3 control-label"
-                ><span class="text-danger">*</span>City Name</label
-              >
-              <div class="col-md-9">
-                <input
-                  type="text"
-                  id="CityName"
-                  name="CityName"
-                  class="form-control"
-                  asp-for="CityName"
-                  placeholder="Enter City Name"
-                />
-                <span asp-validation-for="CityName" class="text-danger"></span>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="CityCode" class="col-md-3 control-label"
-                ><span class="text-danger">*</span>City Code</label
-              >
-              <div class="col-md-9">
-                <input
-                  type="text"
-                  id="CityCode"
-                  name="CityCode"
-                  class="form-control"
-                  asp-for="CityCode"
-                  placeholder="Enter City Code"
-                />
-                <span asp-validation-for="CityCode" class="text-danger"></span>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <div class="col-md-offset-3 col-md-9">
-                <input type="submit" class="btn btn-success" value="Save" />
-                <a
-                  class="btn btn-default"
-                  asp-controller="City"
-                  asp-action="Index"
-                  >Cancel</a
-                >
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
-  </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">City Add/Edit</h3>
+                </div>
+                <div class="panel-body">
+                    <h4 class="text-success">@TempData["CityInsertMessage"]</h4>
+                    <form class="form-horizontal"
+                          role="form"
+                          method="post"
+                          asp-controller="City"
+                          asp-action="Save">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        @Html.HiddenFor(x => x.CityID)
+
+                        <div class="form-group">
+                            <label for="CountryID" class="col-md-3 control-label"><span class="text-danger">*</span>Country Name</label>
+                            <div class="col-md-9">
+                                <select id="CountryID"
+                                        name="CountryID"
+                                        class="form-control"
+                                        asp-for="CountryID">
+                                    <option value="">Select Country</option>
+                                    @foreach (var country in ViewBag.CountryList)
+                                    {
+                                        <option value="@country.CountryID">
+                                            @country.CountryName
+                                        </option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CountryID" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="StateID" class="col-md-3 control-label"><span class="text-danger">*</span>State Name</label>
+                            <div class="col-md-9">
+                                <select id="StateID"
+                                        name="StateID"
+                                        class="form-control"
+                                        asp-for="StateID">
+                                    <option value="">Select State</option>
+                                    @if (ViewBag.StateList != null)
+                                    {
+                                        foreach (var state in
+                                                            ViewBag.StateList)
+                                        {
+                                            if (state.StateID == Model.StateID)
+                                            {
+                                                <option value="@state.StateID">@state.StateName</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@state.StateID">@state.StateName</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                                <span asp-validation-for="StateID" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="CityName" class="col-md-3 control-label"><span class="text-danger">*</span>City Name</label>
+                            <div class="col-md-9">
+                                <input type="text"
+                                       id="CityName"
+                                       name="CityName"
+                                       class="form-control"
+                                       asp-for="CityName"
+                                       placeholder="Enter City Name" />
+                                <span asp-validation-for="CityName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="CityCode" class="col-md-3 control-label"><span class="text-danger">*</span>City Code</label>
+                            <div class="col-md-9">
+                                <input type="text"
+                                       id="CityCode"
+                                       name="CityCode"
+                                       class="form-control"
+                                       asp-for="CityCode"
+                                       placeholder="Enter City Code" />
+                                <span asp-validation-for="CityCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-offset-3 col-md-9">
+                                <input type="submit" class="btn btn-success" value="Save" />
+                                <a class="btn btn-default"
+                                   asp-controller ="City"
+                                   asp-action="Index">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+</main>
 @section Scripts {
-<script>
-  $(document).ready(function () {
-    $("#CountryID").change(function () {
-      var countryId = $(this).val();
-      if (countryId) {
-        $.ajax({
-          url: '@Url.Action("GetStatesByCountry", "City")',
-          type: "POST", // Changed to POST
-          data: { CountryID: countryId }, // Use 'CountryID' to match controller
-          success: function (data) {
-            $("#StateID")
-              .empty()
-              .append('<option value="">Select State</option>');
-            $.each(data, function (i, state) {
-              $("#StateID").append(
-                '<option value="' +
-                  state.stateID +
-                  '">' +
-                  state.stateName +
-                  "</option>"
-              );
+    <script>
+        $(document).ready(function () {
+            $("#CountryID").change(function () {
+                var countryId = $(this).val();
+                if (countryId) {
+                    $.ajax({
+                        url: '@Url.Action("GetStatesByCountry", "City")',
+                        type: "POST", // Changed to POST
+                        data: { CountryID: countryId }, // Use 'CountryID' to match controller
+                        success: function (data) {
+                            $("#StateID")
+                                .empty()
+                                .append('<option value="">Select State</option>');
+                            $.each(data, function (i, state) {
+                                $("#StateID").append(
+                                    '<option value="' +
+                                    state.stateID +
+                                    '">' +
+                                    state.stateName +
+                                    "</option>"
+                                );
+                            });
+                            console.log(state.stateID);
+                        },
+                        error: function (xhr, status, error) {
+                            console.error(error);
+                        },
+                    });
+                } else {
+                    $("#StateID").empty().append('<option value="">Select State</option>');
+                }
             });
-            console.log(state.stateID);
-          },
-          error: function (xhr, status, error) {
-            console.error(error);
-          },
         });
-      } else {
-        $("#StateID").empty().append('<option value="">Select State</option>');
-      }
-    });
-  });
-</script>
+    </script>
 
 }
 ```
