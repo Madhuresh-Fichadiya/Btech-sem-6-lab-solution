@@ -109,12 +109,25 @@ INSERT INTO City (CityName, CityCode, StateID, CountryID, CreatedDate) VALUES
 ### Get All Cities
 
 ```sql
-CREATE PROCEDURE PR_LOC_City_SelectAll
-AS
-BEGIN
-    SELECT CityID, CityName, StateID, CountryID, CityCode
-    FROM City
-END
+PROCEDURE [dbo].[PR_LOC_City_SelectAll]
+AS 
+SELECT
+		[dbo].[City].[CityID],
+		[dbo].[City].[StateID],
+		[dbo].[Country].CountryID,
+		[dbo].[Country].[CountryName],
+		[dbo].[State].[StateName],
+		[dbo].[State].[StateCode],
+		[dbo].[City].[CreatedDate],
+		[dbo].[City].[ModifiedDate],
+		[dbo].[City].[CityName],
+		[dbo].[City].[CityCode]
+		
+FROM [dbo].[City]
+LEFT OUTER JOIN [dbo].[State]
+ON [dbo].[State].[StateID] = [dbo].[City].[StateID]
+LEFT OUTER JOIN [dbo].[Country]
+ON [dbo].[Country].[CountryID] = [dbo].[State].[CountryID]
 ```
 
 ### Get City by ID
