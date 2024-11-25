@@ -9,7 +9,10 @@ This project demonstrates how to perform CRUD operations for the `City` table wi
 ```sql
 CREATE TABLE Country (
     CountryID INT PRIMARY KEY IDENTITY(1,1),
-    CountryName NVARCHAR(100) NOT NULL
+    CountryName NVARCHAR(100) NOT NULL,
+    CountryCode NVARCHAR(10) NOT NULL,
+    CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
+    ModifiedDate DATETIME NULL
 );
 ```
 
@@ -21,6 +24,8 @@ CREATE TABLE State (
     CountryID INT NOT NULL,
     StateName NVARCHAR(100) NOT NULL,
     StateCode NVARCHAR(10),
+    CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
+    ModifiedDate DATETIME NULL,
     FOREIGN KEY (CountryID) REFERENCES Country(CountryID)
 );
 ```
@@ -31,9 +36,13 @@ CREATE TABLE State (
 CREATE TABLE City (
     CityID INT PRIMARY KEY IDENTITY(1,1),
     StateID INT NOT NULL,
+    CountryID INT NOT NULL,
     CityName NVARCHAR(100) NOT NULL,
     CityCode NVARCHAR(10),
-    FOREIGN KEY (StateID) REFERENCES State(StateID)
+    CreatedDate DATETIME NOT NULL DEFAULT GETDATE(),
+    ModifiedDate DATETIME NULL,
+    FOREIGN KEY (StateID) REFERENCES State(StateID),
+    FOREIGN KEY (CountryID) REFERENCES Country(CountryID)
 );
 ```
 
@@ -75,8 +84,8 @@ CREATE PROCEDURE PR_LOC_City_Insert
     @CountryID INT
 AS
 BEGIN
-    INSERT INTO City (CityName, CityCode, StateID, CountryID)
-    VALUES (@CityName, @CityCode, @StateID, @CountryID)
+    INSERT INTO City (CityName, CityCode, StateID, CountryID, CreatedDate)
+    VALUES (@CityName, @CityCode, @StateID, @CountryID, GETDATE());
 END
 ```
 
@@ -92,8 +101,12 @@ CREATE PROCEDURE PR_LOC_City_Update
 AS
 BEGIN
     UPDATE City
-    SET CityName = @CityName, CityCode = @CityCode, StateID = @StateID, CountryID = @CountryID
-    WHERE CityID = @CityID
+    SET CityName = @CityName,
+        CityCode = @CityCode,
+        StateID = @StateID,
+        CountryID = @CountryID,
+        ModifiedDate = GETDATE()
+    WHERE CityID = @CityID;
 END
 ```
 
