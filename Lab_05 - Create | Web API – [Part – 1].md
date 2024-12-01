@@ -1,6 +1,6 @@
 # ASP.NET Core Web API | GetAll, GetByID & Delete Operation
 
-## Steps to Build the Project
+## Steps to Create the API Project with Above Operations
 
 ### 1. **Create a New Web API Project**
 
