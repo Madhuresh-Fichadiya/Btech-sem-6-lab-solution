@@ -1,4 +1,4 @@
-# ASP.NET Core Web API
+# ASP.NET Core Web API | GetAll, GetByID & Delete Operation
 
 ## Steps to Build the Project
 
