@@ -157,7 +157,7 @@ namespace CityAPI.Data
 
 ### 6. **Add the CityController**
 
-Create a folder named `Controllers` and add a `CityController.cs` file with the following code:
+Create a folder named `Controllers` and add API Controller as `CityController.cs` file with the following code:
 
 ```csharp
 using CityAPI.Data;
