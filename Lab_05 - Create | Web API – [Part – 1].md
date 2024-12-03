@@ -23,10 +23,10 @@ dotnet add package Microsoft.Data.SqlClient
 dotnet add package Microsoft.AspNetCore.Mvc.NewtonsoftJson (Version 8.0.0)
 ```
 **OR**
-```bash
-Go to **Tools** > **NuGet Package Manager** > **Manage Nuget Packages for Solution** 
-Click On Browse, Search All above mentioned Packages and install one by one
-```
+
+In Visual Studio, Go to **Tools** > **NuGet Package Manager** > **Manage Nuget Packages for Solution**
+Click On Browse, Search package name from above mentioned packages and install one by one
+
 ---
 
 ### 3. **Configure Database Connection**
@@ -226,7 +226,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddScoped<CityRepository>();
+```
+**builder.Services.AddScoped<CityRepository>()**;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
