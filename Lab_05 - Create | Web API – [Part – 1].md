@@ -20,7 +20,7 @@ dotnet add package Microsoft.EntityFrameworkCore.SqlServer
 dotnet add package Microsoft.EntityFrameworkCore.Tools
 dotnet add package Swashbuckle.AspNetCore
 dotnet add package Microsoft.Data.SqlClient
-dotnet add package Microsoft.AspNetCore.Mvc.NewtonsoftJson
+dotnet add package Microsoft.AspNetCore.Mvc.NewtonsoftJson (Version 8.0.0)
 ```
 
 ---
