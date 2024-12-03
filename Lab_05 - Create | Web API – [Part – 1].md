@@ -22,7 +22,11 @@ dotnet add package Swashbuckle.AspNetCore
 dotnet add package Microsoft.Data.SqlClient
 dotnet add package Microsoft.AspNetCore.Mvc.NewtonsoftJson (Version 8.0.0)
 ```
-
+**OR**
+```bash
+Go to **Tools** > **NuGet Package Manager** > **Manage Nuget Packages for Solution** 
+Click On Browse, Search All above mentioned Packages and install one by one
+```
 ---
 
 ### 3. **Configure Database Connection**
