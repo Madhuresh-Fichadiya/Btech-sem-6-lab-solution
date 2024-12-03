@@ -13,6 +13,8 @@
   - `PR_LOC_Country_SelectComboBox`
   - `PR_LOC_State_SelectComboBoxByCountryID`
 
+**Packages mentioned in Part-1 (previous lab), Model Classes, Database Configuration**
+
 ## Steps
 
 ### 1. **Create Repository Layer**
