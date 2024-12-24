@@ -1,6 +1,4 @@
-### Count Preparation - Part 1
-
-# Count of Cities by State - API Documentation
+# Count Preparation - Part 1
 
 ## Overview
 This guide provides instructions for modifying the database and API to include the count of cities in each state. The changes include updating a stored procedure, adding a new field to the CityModel, and updating the StateRepository for API integration.
