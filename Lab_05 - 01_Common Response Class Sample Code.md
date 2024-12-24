@@ -23,7 +23,7 @@ public async Task<Object> GetAll()
 }
 ```
 
-##Consume Web API - Controller Action Method
+## Consume Web API - Controller Action Method
 ```csharp
 public async Task<IActionResult> Index()
 {
