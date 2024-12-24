@@ -10,7 +10,7 @@ This guide provides instructions for modifying the database and API to include t
 ## Step 1: Alter the Stored Procedure
 Update the stored procedure to include the city count for each state.
 
-sql
+```sql
 ALTER PROCEDURE [dbo].[PR_LOC_State_SelectAll]
 AS
 BEGIN
@@ -38,7 +38,7 @@ BEGIN
         [dbo].[State].[CreatedDate],
         [dbo].[State].[ModifiedDate];
 END;
-
+```
 
 ---
 
@@ -47,7 +47,7 @@ Add a new field CityCount to the CityModel in the API.
 
 ### Code Changes:
 *CityModel.cs*
-csharp
+```csharp
 public class CityModel
 {
     public int StateID { get; set; }
@@ -57,7 +57,7 @@ public class CityModel
     public DateTime ModifiedDate { get; set; }
     public int CityCount { get; set; } // New field
 }
-
+```
 
 ---
 
@@ -66,7 +66,7 @@ Modify the repository to include the CityCount field in the database query resul
 
 ### Code Changes:
 *StateRepository.cs*
-csharp
+```csharp
 public List<CityModel> GetCities()
 {
     List<CityModel> cities = new List<CityModel>();
@@ -96,7 +96,7 @@ public List<CityModel> GetCities()
 
     return cities;
 }
-
+```
 
 ---
 
@@ -105,7 +105,7 @@ Update the ConsumeAPI State Model to include the CityCount field.
 
 ### Code Changes:
 *StateModel.cs*
-csharp
+```csharp
 public class StateModel
 {
     public int StateID { get; set; }
@@ -117,7 +117,7 @@ public class StateModel
     public DateTime ModifiedDate { get; set; }
     public int CityCount { get; set; } // New field
 }
-
+```
 
 ---
 
@@ -126,7 +126,7 @@ Update the view page to display the CityCount field in the table.
 
 ### Code Changes:
 *View.cshtml*
-html
+```html
 <table class="table table-striped">
     <thead>
         <tr>
@@ -152,7 +152,7 @@ html
         }
     </tbody>
 </table>
-
+```
 
 ---
 
