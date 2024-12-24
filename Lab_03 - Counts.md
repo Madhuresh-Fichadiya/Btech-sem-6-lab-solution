@@ -1,4 +1,4 @@
-### GET Count of City By State
+### Count Preparation - Part 1
 
 # Count of Cities by State - API Documentation
 
