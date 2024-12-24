@@ -61,7 +61,7 @@ public class StudentModel
     [Required]
     public int DepartmentID { get; set; }
 
-    [Newtonsoft.Json.JsonIgnore]
+    [Newtonsoft.Json.JsonIgnore] // used to ignore fields in json payload while posting to api
     public string? DepartmentName { get; set; }
 
     [Newtonsoft.Json.JsonIgnore]
