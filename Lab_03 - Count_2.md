@@ -1,4 +1,4 @@
-# Get Cities by State - API Documentation
+# Get Cities by State
 
 ## Overview
 This guide provides step-by-step instructions to implement functionality for retrieving cities based on a specific state.
