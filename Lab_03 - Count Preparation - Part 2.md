@@ -87,7 +87,7 @@ html
                 <td>@state.StateCode</td>
                 <td>@state.CountryID</td>
                 <td>@state.CountryName</td>
-                <td><a asp-action="Index" asp-controller="City" asp-route-StateID=@state.StateID>@city.CityCount</a></td>
+                <td><a asp-action="Index" asp-controller="City" asp-route-StateID="@state.StateID">@city.CityCount</a></td>
             </tr>
         }
     </tbody>
