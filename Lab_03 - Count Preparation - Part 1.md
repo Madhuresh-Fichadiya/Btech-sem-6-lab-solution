@@ -40,34 +40,36 @@ END;
 
 ---
 
-## Step 2: Update the CityModel
+## Step 2: Update the StateModel
 Add a new field CityCount to the CityModel in the API.
 
 ### Code Changes:
-*CityModel.cs*
+*StateModel.cs*
 ```csharp
-public class CityModel
+public class StateModel
 {
     public int StateID { get; set; }
-    public string CityName { get; set; }
-    public string CityCode { get; set; }
+    public string StateName { get; set; }
+    public string StateCode { get; set; }
+    public int CountryID {get;set;}
+    public string? CountryName { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
-    public int CityCount { get; set; } // New field
+    public int? CityCount { get; set; } // New field
 }
 ```
 
 ---
 
-## Step 3: Update the StateRepository
+## Step 3: Update the State Repository
 Modify the repository to include the CityCount field in the database query result mapping.
 
 ### Code Changes:
 *StateRepository.cs*
 ```csharp
-public List<CityModel> GetCities()
+public List<StateModel> GetStates()
 {
-    List<CityModel> cities = new List<CityModel>();
+    List<StateModel> states = new List<StateModel>();
 
     using (SqlCommand cmd = new SqlCommand("PR_LOC_State_SelectAll", connection))
     {
@@ -78,21 +80,23 @@ public List<CityModel> GetCities()
         {
             while (reader.Read())
             {
-                CityModel city = new CityModel
+                StateModel state = new StateModel
                 {
                     StateID = reader.GetInt32(reader.GetOrdinal("StateID")),
-                    CityName = reader.GetString(reader.GetOrdinal("CityName")),
-                    CityCode = reader.GetString(reader.GetOrdinal("CityCode")),
+                    StateName = reader.GetString(reader.GetOrdinal("StateName")),
+                    CountryID = reader.GetString(reader.GetOrdinal("CountryID")),
+                    CountryName = reader.GetString(reader.GetOrdinal("CountryName")),
+                    StateCode = reader.GetString(reader.GetOrdinal("StateCode")),
                     CreatedDate = reader.GetDateTime(reader.GetOrdinal("CreatedDate")),
                     ModifiedDate = reader.GetDateTime(reader.GetOrdinal("ModifiedDate")),
                     CityCount = reader.GetInt32(reader.GetOrdinal("CityCount")) // Mapping CityCount
                 };
-                cities.Add(city);
+                states.Add(state);
             }
         }
     }
 
-    return cities;
+    return states;
 }
 ```
 
@@ -110,10 +114,10 @@ public class StateModel
     public string StateName { get; set; }
     public string StateCode { get; set; }
     public int CountryID { get; set; }
-    public string CountryName { get; set; }
+    public string? CountryName { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
-    public int CityCount { get; set; } // New field
+    public int? CityCount { get; set; } // New field
 }
 ```
 
