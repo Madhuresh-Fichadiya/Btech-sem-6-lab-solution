@@ -79,15 +79,15 @@ html
         </tr>
     </thead>
     <tbody>
-        @foreach (var city in Model)
+        @foreach (var state in Model)
         {
             <tr>
-                <td>@city.StateID</td>
-                <td>@city.StateName</td>
-                <td>@city.StateCode</td>
-                <td>@city.CountryID</td>
-                <td>@city.CountryName</td>
-                <td><a asp-action="Index" asp-controller="City" asp-route-StateID=@city.StateID>@city.CityCount</a></td>
+                <td>@state.StateID</td>
+                <td>@state.StateName</td>
+                <td>@state.StateCode</td>
+                <td>@state.CountryID</td>
+                <td>@state.CountryName</td>
+                <td><a asp-action="Index" asp-controller="City" asp-route-StateID=@state.StateID>@city.CityCount</a></td>
             </tr>
         }
     </tbody>
