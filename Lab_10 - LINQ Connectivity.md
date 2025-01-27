@@ -7,7 +7,7 @@ Add following packages in Console Application
 **- Microsoft.EntityFrameworkCore.Tools**
 
 ## Step 2: Add Model class and ApplicationDbContext class files
-- Here we have used Employee model 
+- Here we have used Employee model, Also Make sure that table name and the class name must be same.
 ```csharp
 //Employee Model class
 public class Employee
