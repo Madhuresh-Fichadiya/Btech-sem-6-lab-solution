@@ -38,6 +38,13 @@ public class ApplicationDBContext : DbContext
  {
     optionsBuilder.UseSqlServer(@"Server=YourServerName;Database=DbName;Trusted_Connection=True");
  }
+
+ // If table name and model name are not same then add following line.
+ //protected override void OnModelCreating(ModelBuilder modelBuilder)
+ //{
+ //    // Ensure the table name is correctly mapped to 'Employees' if it doesn't follow the default convention
+ //    modelBuilder.Entity<Employee>().ToTable("Employees");
+ //}
 }
 ```
 
