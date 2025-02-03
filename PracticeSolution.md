@@ -25,6 +25,7 @@ var allSkills = employees.SelectMany(e => e.Skills).Distinct().ToList();
 7. Get employees who know "C#".
 ```csharp
 var csharpEmployees = employees.Where(e => e.Skills.Contains("C#")).Select(e => e.Name).ToList();
+```
 8. Get department-wise skill sets.
 ```csharp
 var departmentSkills = employees.GroupBy(e => e.Department)
@@ -52,77 +53,77 @@ var jEmployees = employees.Where(e => e.Name.StartsWith("J")).ToList();
 ```csharp
 var salaryNumbers = employees.Select(e => (object)e.Salary).OfType<int>().ToList();
 ```
-15. Get all boolean properties.
+14. Get all boolean properties.
 ```csharp
 var boolValues = employees.Select(e => (object)e.IsPermanent).OfType<bool>().ToList();
-16. Get the total salary expense.
+```
+15. Get the total salary expense.
 ```csharp
 var totalSalary = employees.Sum(e => e.Salary);
 ```
-17. Find the highest salary.
+16. Find the highest salary.
 ```csharp
 var maxSalary = employees.Max(e => e.Salary);
 ```
-18. Find the lowest salary.
+17. Find the lowest salary.
 ```csharp
 var minSalary = employees.Min(e => e.Salary);
 ```
-19. Find the average salary.
+18. Find the average salary.
 ```csharp
 var avgSalary = employees.Average(e => e.Salary);
 ```
-20. Group employees by department.
+19. Group employees by department.
 ```csharp
 var deptGroups = employees.GroupBy(e => e.Department);
 ```
-21. Find the count of employees in each department.
+20. Find the count of employees in each department.
 ```csharp
 var deptCount = employees.GroupBy(e => e.Department)
                          .Select(g => new { Department = g.Key, Count = g.Count() })
                          .ToList();
 ```
-22. Get the highest salary in each department.
+21. Get the highest salary in each department.
 ```csharp
 var deptMaxSalary = employees.GroupBy(e => e.Department)
                              .Select(g => new { Department = g.Key, MaxSalary = g.Max(e => e.Salary) })
                              .ToList();
 ```
-23. Get employees sorted by salary in descending order.
+22. Get employees sorted by salary in descending order.
 ```csharp
 var sortedEmployees = employees.OrderByDescending(e => e.Salary).ToList();
 ```
-24. Get employees sorted first by department, then by salary.
+23. Get employees sorted first by department, then by salary.
 ```csharp
 var sortedMulti = employees.OrderBy(e => e.Department).ThenByDescending(e => e.Salary).ToList();
 ```
-25. Find the employee with the highest salary.
+24. Find the employee with the highest salary.
 ```csharp
 var topEarner = employees.OrderByDescending(e => e.Salary).FirstOrDefault();
 ```
-```csharp
-26. Find the second-highest salary.
+25. Find the second-highest salary.
 ```csharp
 var secondHighestSalary = employees.OrderByDescending(e => e.Salary).Skip(1).FirstOrDefault();
 ```
-27. Get all employees with names having at least one vowel.
+26. Get all employees with names having at least one vowel.
 ```csharp
 var vowelEmployees = employees.Where(e => "AEIOUaeiou".Any(v => e.Name.Contains(v))).ToList();
 ```
-28. Get department-wise average salary excluding lowest salary.
+27. Get department-wise average salary excluding lowest salary.
 ```csharp
 var avgExcludingMin = employees.GroupBy(e => e.Department)
                                .Select(g => new { Department = g.Key, AvgSalary = g.Where(e => e.Salary > g.Min(e => e.Salary)).Average(e => e.Salary) })
                                .ToList();
 ```
-29. Find employees whose total skill length exceeds 10 characters.
+28. Find employees whose total skill length exceeds 10 characters.
 ```csharp
 var longSkillEmployees = employees.Where(e => e.Skills.Sum(s => s.Length) > 10).ToList();
 ```
-30. Get employees whose names are palindromes.
+29. Get employees whose names are palindromes.
 ```csharp
 var palindromeEmployees = employees.Where(e => e.Name.ToLower() == new string(e.Name.ToLower().Reverse().ToArray())).ToList();
 ```
-31. Get department with the highest number of employees.
+30. Get department with the highest number of employees.
 ```csharp
 var topDepartment = employees.GroupBy(e => e.Department)
                              .OrderByDescending(g => g.Count())
