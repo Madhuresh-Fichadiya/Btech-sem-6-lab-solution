@@ -45,25 +45,14 @@ Create models to represent your database tables. Follow these steps:
 
 1. Right-click on the solution and choose "Add" > "New Folder".
 2. Name the folder as "Models".
-3. Inside this folder, create files for each entity (e.g., `Employee.cs`, `Department.cs`).
+3. Inside this folder, create files for entity (e.g.,`DepartmentModel.cs`).
 
 **Example Entity Models**:
 
 ```csharp
-public class Employee
+public class DepartmentModel
 {
-    public int EmployeeId { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public DateTime DateOfBrith { get; set; }
-    public Gender Gender { get; set; }
-    public int DepartmentId { get; set; }
-    public string PhotoPath { get; set; }
-}
-
-public class Department
-{
+    [Key]
     public int DepartmentId { get; set; }
     public string DepartmentName { get; set; }
 }
@@ -83,7 +72,6 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<Employee> Employees { get; set; }
     public DbSet<Department> Departments { get; set; }
 }
 ```
@@ -100,7 +88,7 @@ In `Program.cs`, configure the DbContext:
 
 ```csharp
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(Configuration.GetConnectionString("DBConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DBConnection")));
 ```
 
 ### Create and Execute Database Migrations
@@ -116,95 +104,85 @@ Update-Database
 
 ### Create Repository Interface
 
-Create a folder named "Repository" and then create a subfolder "Interface" within it. Add interfaces `IEmployeeRepository.cs` and `IDepartmentRepository.cs`.
+Create a folder named "Repository" and then create a subfolder "Interface" within it. Add interfaces `IDepartmentRepository.cs`.
 
 **Example Interface**:
 
 ```csharp
-public interface IEmployeeRepository
-{
-    Task<IEnumerable<Employee>> GetEmployees();
-    Task<Employee> GetEmployee(int employeeId);
-    Task<Employee> AddEmployee(Employee employee);
-    Task<Employee> UpdateEmployee(Employee employee);
-    void DeleteEmployee(int employeeId);
-}
-
-public interface IDepartmentRepository
-{
-    IEnumerable<Department> GetDepartments();
-    Department GetDepartment(int departmentId);
-}
+ public interface IDepartmentRepository
+ {
+     Task<IEnumerable<DepartmentModel>> GetDepartments();
+     Task<DepartmentModel> GetDepartment(int departmentId);
+     Task<bool> DeleteDepartment(int departmentId);
+     Task<DepartmentModel> UpdateDepartment(DepartmentModel model);
+     Task<DepartmentModel> AddDepartment(DepartmentModel model);
+ }
 ```
 
 ### Create Repository Class
 
-Inside the "Repository" folder, create a subfolder "Services". Add classes `EmployeeRepository.cs` and `DepartmentRepository.cs`.
+Inside the "Repository" folder, create a subfolder "Services". Add class `DepartmentRepository.cs`.
 
-**Example Implementation for EmployeeRepository**:
+**Example Implementation for DepartmentRepository**:
 
 ```csharp
-public class EmployeeRepository : IEmployeeRepository
-{
-    private readonly AppDbContext appDbContext;
+ public class DepartmentRepository : IDepartmentRepository
+ {
+     private readonly AppDbContext appDbContext;
 
-    public EmployeeRepository(AppDbContext appDbContext)
-    {
-        this.appDbContext = appDbContext;
-    }
+     public DepartmentRepository(AppDbContext appDbContext)
+     {
+         this.appDbContext = appDbContext;
+     }
 
-    public async Task<IEnumerable<Employee>> GetEmployees()
-    {
-        return await appDbContext.Employees.ToListAsync();
-    }
+     public async Task<DepartmentModel> GetDepartment(int departmentId)
+     {
+         return await appDbContext.Departments
+             .FirstOrDefaultAsync(d => d.DepartmentId == departmentId);
+     }
 
-    public async Task<Employee> GetEmployee(int employeeId)
-    {
-        return await appDbContext.Employees
-            .FirstOrDefaultAsync(e => e.EmployeeId == employeeId);
-    }
+     public async Task<IEnumerable<DepartmentModel>> GetDepartments()
+     {
+         return await appDbContext.Departments.ToListAsync();
+     }
 
-    public async Task<Employee> AddEmployee(Employee employee)
-    {
-        var result = await appDbContext.Employees.AddAsync(employee);
-        await appDbContext.SaveChangesAsync();
-        return result.Entity;
-    }
+     public async Task<DepartmentModel> AddDepartment(DepartmentModel department)
+     {
+         var result = await appDbContext.Departments.AddAsync(department);
 
-    public async Task<Employee> UpdateEmployee(Employee employee)
-    {
-        var result = await appDbContext.Employees
-            .FirstOrDefaultAsync(e => e.EmployeeId == employee.EmployeeId);
+         await appDbContext.SaveChangesAsync();
 
-        if (result != null)
-        {
-            result.FirstName = employee.FirstName;
-            result.LastName = employee.LastName;
-            result.Email = employee.Email;
-            result.DateOfBrith = employee.DateOfBrith;
-            result.Gender = employee.Gender;
-            result.DepartmentId = employee.DepartmentId;
-            result.PhotoPath = employee.PhotoPath;
+         return result.Entity;
+     }
 
-            await appDbContext.SaveChangesAsync();
+     public async Task<DepartmentModel> UpdateDepartment(DepartmentModel department)
+     {
+         var existingDepartment = await appDbContext.Departments
+             .FirstOrDefaultAsync(d => d.DepartmentId == department.DepartmentId);
 
-            return result;
-        }
+         if (existingDepartment == null) return null;
 
-        return null;
-    }
+         existingDepartment.DepartmentName = department.DepartmentName;
 
-    public async void DeleteEmployee(int employeeId)
-    {
-        var result = await appDbContext.Employees
-            .FirstOrDefaultAsync(e => e.EmployeeId == employeeId);
-        if (result != null)
-        {
-            appDbContext.Employees.Remove(result);
-            await appDbContext.SaveChangesAsync();
-        }
-    }
-}
+         await appDbContext.SaveChangesAsync();
+
+         return existingDepartment;
+     }
+
+     public async Task<bool> DeleteDepartment(int departmentId)
+     {
+         var departmentToDelete = await appDbContext.Departments
+             .FirstOrDefaultAsync(d => d.DepartmentId == departmentId);
+
+         if (departmentToDelete == null) return false;
+
+         appDbContext.Departments.Remove(departmentToDelete);
+
+         await appDbContext.SaveChangesAsync();
+
+         return true;
+     }
+ }
 ```
 
 ### Configure Services in `Program.cs`
@@ -213,109 +191,9 @@ Add the following lines to configure the repository services:
 
 ```csharp
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
-builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 ```
 
 ## Creating API Controllers
-
-### EmployeesController
-
-In the "Controllers" folder, create `EmployeesController.cs`.
-
-**Example Controller for Employees**:
-
-```csharp
-[Route("api/[controller]")]
-[ApiController]
-public class EmployeesController : ControllerBase
-{
-    private readonly IEmployeeRepository employeeRepository;
-
-    public EmployeesController(IEmployeeRepository employeeRepository)
-    {
-        this.employeeRepository = employeeRepository;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult> GetEmployees()
-    {
-        try
-        {
-            return Ok(await employeeRepository.GetEmployees());
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, 
-                "Error retrieving data from the database");
-        }
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Employee>> GetEmployee(int id)
-    {
-        try
-        {
-            var result = await employeeRepository.GetEmployee(id);
-            if (result == null) return NotFound();
-            return result;
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Error retrieving data from the database");
-        }
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<Employee>> CreateEmployee(Employee employee)
-    {
-        try
-        {
-            if (employee == null) return BadRequest();
-            var createdEmployee = await employeeRepository.AddEmployee(employee);
-            return CreatedAtAction(nameof(GetEmployee), new { id = createdEmployee.EmployeeId }, createdEmployee);
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                "Error creating new employee record");
-        }
-    }
-
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<Employee>> UpdateEmployee(int id, Employee employee)
-    {
-        try
-        {
-            if (id != employee.EmployeeId) return BadRequest("Employee ID mismatch");
-            var employeeToUpdate = await employeeRepository.GetEmployee(id);
-            if (employeeToUpdate == null) return NotFound($"Employee with Id = {id} not found");
-            return await employeeRepository.UpdateEmployee(employee);
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "Error updating data");
-        }
-    }
-
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult<Employee>> DeleteEmployee(int id)
-    {
-        try
-        {
-            var employeeToDelete = await employeeRepository.GetEmployee(id);
-            if (employeeToDelete == null)
-                return NotFound($"Employee with Id = {id} not found");
-            return await employeeRepository.DeleteEmployee(id);
-        }
-        catch (Exception)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, "Error deleting data");
-        }
-    }
-}
-```
-
 ### DepartmentsController
 
 In the "Controllers" folder, create `DepartmentsController.cs`.
@@ -343,13 +221,13 @@ public class DepartmentsController : ControllerBase
         }
         catch (Exception)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, 
+            return StatusCode(StatusCodes.Status500InternalServerError,
                 "Error retrieving data from the database");
         }
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Department>> GetDepartment(int id)
+    public async Task<ActionResult<DepartmentModel>> GetDepartment(int id)
     {
         try
         {
@@ -361,6 +239,63 @@ public class DepartmentsController : ControllerBase
         {
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Error retrieving data from the database");
+        }
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<DepartmentModel>> CreateDepartment(DepartmentModel department)
+    {
+        try
+        {
+            if (department == null)
+                return BadRequest("Department cannot be null");
+
+            var createdDepartment = await departmentRepository.AddDepartment(department);
+            return CreatedAtAction(nameof(GetDepartment), new { id = createdDepartment.DepartmentId }, createdDepartment);
+        }
+        catch (Exception)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Error creating new department record");
+        }
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<DepartmentModel>> UpdateDepartment(int id, DepartmentModel department)
+    {
+        try
+        {
+            if (id != department.DepartmentId)
+                return BadRequest("Department ID mismatch");
+
+            var updatedDepartment = await departmentRepository.UpdateDepartment(department);
+            if (updatedDepartment == null)
+                return NotFound($"Department with Id = {id} not found");
+
+            return updatedDepartment;
+        }
+        catch (Exception)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Error updating data");
+        }
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteDepartment(int id)
+    {
+        try
+        {
+            var success = await departmentRepository.DeleteDepartment(id);
+            if (!success)
+                return NotFound($"Department with Id = {id} not found");
+
+            return NoContent();
+        }
+        catch (Exception)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Error deleting department");
         }
     }
 }
