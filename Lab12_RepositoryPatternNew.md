@@ -72,7 +72,7 @@ public class AppDbContext : DbContext
     {
     }
 
-    public DbSet<Department> Departments { get; set; }
+    public DbSet<DepartmentModel> Departments { get; set; }
 }
 ```
 
