@@ -26,45 +26,6 @@ HTTP verbs (also called HTTP methods) tell the server what action you want to pe
 | **DELETE** | Removes data from server         | Delete a product                | DELETE (remove)       |
 | **PATCH**  | Updates part of existing data    | Update only product price       | UPDATE (partial edit) |
 
-**Simple Analogy:**
-
-- **GET** = Reading a book (you don't change anything)
-- **POST** = Writing a new book (creating something new)
-- **PUT** = Rewriting an entire book (replacing everything)
-- **DELETE** = Throwing away a book (removing it)
-
-### HTTP Verbs in Real Life
-
-Imagine a library system:
-
-```
-GET    /books          → Show me all books
-GET    /books/5        → Show me book with ID 5
-POST   /books          → Add a new book to the library
-PUT    /books/5        → Update all details of book 5
-DELETE /books/5        → Remove book 5 from library
-```
-
-### Why Use Different HTTP Verbs?
-
-Without HTTP verbs, you'd need separate URLs for everything:
-
-```
-❌ Bad approach (without HTTP verbs):
-/books/getall
-/books/getbyid/5
-/books/create
-/books/update/5
-/books/delete/5
-
-✅ Good approach (with HTTP verbs):
-GET    /books
-GET    /books/5
-POST   /books
-PUT    /books/5
-DELETE /books/5
-```
-
 ---
 
 ## How HTTP Verbs Are Defined in Controllers
@@ -137,60 +98,6 @@ You can add more to the route for specific methods:
 | With ID       | `[HttpGet("{id}")]`         | `api/roles/5`         | Adds ID parameter to route |
 | With text     | `[HttpGet("search")]`       | `api/roles/search`    | Adds fixed text to route   |
 | Combined      | `[HttpGet("{id}/details")]` | `api/roles/5/details` | Combines ID and text       |
-
-### Understanding Route Parameters
-
-**`{id}` in routes:**
-
-- `{id}` is a **route parameter** (placeholder for dynamic values)
-- The value from the URL is automatically passed to your method parameter
-- Must match the parameter name (case-insensitive)
-
-**Example:**
-
-```csharp
-[HttpGet("{id}")]
-public IActionResult GetById(int id)
-```
-
-If URL is `api/roles/5`, then `id = 5`
-
-### Route Parameter Types
-
-You can specify the type of parameter expected:
-
-| Constraint    | Example             | What It Matches      | Usage                            |
-| ------------- | ------------------- | -------------------- | -------------------------------- |
-| `:int`        | `{id:int}`          | Integer numbers only | `[HttpGet("{id:int}")]`          |
-| `:alpha`      | `{name:alpha}`      | Letters only         | `[HttpGet("{name:alpha}")]`      |
-| `:min(value)` | `{id:int:min(1)}`   | Minimum value        | `[HttpGet("{id:int:min(1)}")]`   |
-| `:max(value)` | `{id:int:max(100)}` | Maximum value        | `[HttpGet("{id:int:max(100)}")]` |
-| `:length(n)`  | `{code:length(5)}`  | Exact length         | `[HttpGet("{code:length(5)}")]`  |
-
----
-
-## Combining Route and HTTP Verb Attributes
-
-You can combine routes directly in HTTP verb attributes:
-
-### Method 1: Separate Attributes (More Clear)
-
-```csharp
-[HttpGet]
-[Route("{id}")]
-public IActionResult GetById(int id) { }
-```
-
-### Method 2: Combined (More Compact)
-
-```csharp
-[HttpGet("{id}")]
-public IActionResult GetById(int id) { }
-```
-
-Both methods work the same way. Use whichever is clearer for you.
-
----
 
 ## Understanding Parameter Binding Attributes
 
@@ -322,30 +229,6 @@ HTTP 404 - Not Found (parameter won't bind correctly)
 
 ---
 
-### Common Route Conflict Scenarios
-
-| Scenario                                       | Why It Conflicts                      | Solution                                                                    |
-| ---------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------------- |
-| `[HttpGet("{id}")]` and `[HttpGet("{name}")]`  | Both match any single parameter       | Use different routes: `[HttpGet("id/{id}")]` and `[HttpGet("name/{name}")]` |
-| `[HttpGet]` twice                              | Both match base route                 | Add different text: `[HttpGet]` and `[HttpGet("active")]`                   |
-| `[HttpGet("{id}")]` and `[HttpGet("details")]` | No conflict - text route has priority | This is OK!                                                                 |
-
----
-
-### Quick Checklist to Avoid Errors
-
-✅ Every API method has an HTTP verb attribute (`[HttpGet]`, `[HttpPost]`, etc.)
-
-✅ No two methods have the same HTTP verb AND same route pattern
-
-✅ Route parameter names match method parameter names
-
-✅ Different operations use different routes or different HTTP verbs
-
-✅ Use route constraints (`:int`, `:alpha`) to differentiate similar routes
-
----
-
 ## HTTP Status Codes and Response Methods
 
 ### Common Status Codes in APIs
@@ -465,7 +348,7 @@ public class RolesController : ControllerBase
     }
 
     // GET: api/roles/5
-    [HttpGet("{id:int}")]
+    [HttpGet]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -516,7 +399,7 @@ public class RolesController : ControllerBase
     }
 
     // PUT: api/roles/5
-    [HttpPut("{id:int}")]
+    [HttpPut]
     public async Task<IActionResult> Update(int id, [FromBody] Role role)
     {
         try
@@ -559,7 +442,7 @@ public class RolesController : ControllerBase
     }
 
     // DELETE: api/roles/5
-    [HttpDelete("{id:int}")]
+    [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -637,7 +520,7 @@ public class UsersController : ControllerBase
     }
 
     // GET: api/users/5
-    [HttpGet("{id:int}")]
+    [HttpGet]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -710,7 +593,7 @@ public class UsersController : ControllerBase
     }
 
     // PUT: api/users/5
-    [HttpPut("{id:int}")]
+    [HttpPut]
     public async Task<IActionResult> Update(int id, [FromBody] User user)
     {
         try
@@ -768,7 +651,7 @@ public class UsersController : ControllerBase
     }
 
     // DELETE: api/users/5
-    [HttpDelete("{id:int}")]
+    [HttpDelete]
     public async Task<IActionResult> Delete(int id)
     {
         try
