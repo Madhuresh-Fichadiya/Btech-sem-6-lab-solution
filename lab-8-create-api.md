@@ -500,7 +500,15 @@ public class UsersController : ControllerBase
     {
         try
         {
-            var users = await _db.Users
+
+// Include is an Entity Framework (EF / EF Core) method used for eager loading related data.
+// What Include does:
+// Tells Entity Framework to load the related Role entity together with the User
+// - This is called eager loading
+// - EF generates a SQL JOIN behind the scenes
+// - Without Include, EF would not automatically load Role unless Lazy loading is enabled, or You explicitly query it
+
+                var users = await _db.Users
                 .Include(u => u.Role)
                 .Select(u => new
                 {
