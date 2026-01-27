@@ -308,3 +308,15 @@ public async Task<List<SelectListItem>> FillRolesDDL()
 }
 
 ```
+
+
+```html
+<div class="form-group">
+    <label>Department</label>
+    <select name="RoleID"
+            class="form-control"
+            asp-items="ViewBag.RoleList">
+        <option value="">-- Select Department --</option>
+    </select>
+</div>
+```
