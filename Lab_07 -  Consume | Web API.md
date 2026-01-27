@@ -287,22 +287,24 @@ public async Task<List<SelectListItem>> FillRolesDDL()
     var response = await _httpClient.GetAsync("Roles/RoleDDL");
 
     // 2. Ensure the API call was successful
-    response.EnsureSuccessStatusCode();
-
-    // 3. Await the reading of the content
-    var data = await response.Content.ReadAsStringAsync();
-
-    // 4. Deserialize using Newtonsoft
-    var roleList = JsonConvert.DeserializeObject<List<JObject>>(data);
-
-    // 5. Map to SelectListItem
-    List<SelectListItem> list = roleList.Select(x => new SelectListItem
+    if (response.IsSuccessStatusCode)
     {
-        Value = x["roleID"].ToString(),
-        Text = x["roleName"].ToString()
-    }).ToList();
+        // 3. Await the reading of the content
+        var data = await response.Content.ReadAsStringAsync();
 
-    return list;
+        // 4. Deserialize using Newtonsoft
+        var roleList = JsonConvert.DeserializeObject<List<JObject>>(data);
+
+        // 5. Map to SelectListItem
+        List<SelectListItem> list = roleList.Select(x => new SelectListItem
+        {
+            Value = x["roleID"].ToString(),
+            Text = x["roleName"].ToString()
+        }).ToList();
+        return list;
+    }
+
+    return new List<SelectListItem>(); // Return an empty list if the API call fails
 }
 
 ```
