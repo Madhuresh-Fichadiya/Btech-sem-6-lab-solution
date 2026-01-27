@@ -269,3 +269,40 @@ namespace Lab14.Areas.City.Controllers
 - Ensure the Web API project is running for the CRUD operations to work correctly.
 
 ---
+
+
+```csharp
+
+public async Task<IActionResult> Index()
+{
+    var data = await _httpClient.GetAsync("Staffs/GetStaffs").Result.Content.ReadAsStringAsync();
+    var staffList = JsonConvert.DeserializeObject<List<Models.Staff>>(data);
+    ViewBag.RoleList = await FillRolesDDL();
+    return View(staffList);
+}
+
+public async Task<List<SelectListItem>> FillRolesDDL()
+{
+    // 1. Await the GetAsync call (Remove .Result)
+    var response = await _httpClient.GetAsync("Roles/RoleDDL");
+
+    // 2. Ensure the API call was successful
+    response.EnsureSuccessStatusCode();
+
+    // 3. Await the reading of the content
+    var data = await response.Content.ReadAsStringAsync();
+
+    // 4. Deserialize using Newtonsoft
+    var roleList = JsonConvert.DeserializeObject<List<JObject>>(data);
+
+    // 5. Map to SelectListItem
+    List<SelectListItem> list = roleList.Select(x => new SelectListItem
+    {
+        Value = x["roleID"].ToString(),
+        Text = x["roleName"].ToString()
+    }).ToList();
+
+    return list;
+}
+
+```
