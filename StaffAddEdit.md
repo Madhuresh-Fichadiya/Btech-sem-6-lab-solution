@@ -58,4 +58,24 @@ public MultipartFormDataContent ConvertToMultipartFormData(Staff staff)
 
 #endregion
 ```
+## ALternative to FormData function - Refactoring Mapping a Generalized way
+```csharp
 
+foreach (var prop in obj.GetType().GetProperties())
+{
+    var value = prop.GetValue(obj);
+    if (value == null) continue;
+
+    if (value is IFormFile file) // Handle the file specifically
+    {
+        var content = new StreamContent(file.OpenReadStream());
+        formData.Add(content, prop.Name, file.FileName);
+    }
+    else // Handle everything else as string
+    {
+        formData.Add(new StringContent(value.ToString()), prop.Name);
+    }
+}
+return formData;
+
+```
