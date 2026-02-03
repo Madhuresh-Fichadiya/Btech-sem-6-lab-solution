@@ -1,71 +1,61 @@
+## Model Change
+```csharp
+public string? PhotoPath { get;set; }
+public IFormFile? Photo { get; set; }
+```
+## Add Edit Page Change
+```
+<div class="col-md-4">
+    <div class="form-check">
+        <label asp-for="Photo" class="form-label">Select Photo</label>
+        <input type="file" asp-for="Photo" class="form-control" />
+        <label asp-for="PhotoPath" class="form-label" />
+    </div>
+</div>
+```
+
 ## List Page Change
 ```html
 <td>
-    <a asp-action="AddEdit" asp-controller="Staff" asp-route-StaffID="@staff.StaffID" class="btn btn-sm btn-success">Edit</a>
-    <a asp-action="Delete" asp-controller="Staff" asp-route-StaffID="@staff.StaffID" class="btn btn-sm btn-danger"
-       onclick="return confirm('Are you sure you want to delete this staff member?');">Delete</a>
+    <td><img src=https://localhost:7155/@staff.PhotoPath  width="100px"/></td>
 </td>
 ```
 ## Controller
 ### Add Edit
 ```csharp
-public async Task<IActionResult> AddEdit(int? StaffID)
-{
-    //Call DDL methods and fill in view bag
-    if (StaffID > 0)
-    {
-        var data = await _httpClient.GetAsync($"Staffs/GetStaff/{StaffID}").Result.Content.ReadAsStringAsync();
-        var staff = JsonConvert.DeserializeObject<Models.Staff>(data);
-        return View("StaffAddEdit", staff);
-    }
-    return View("StaffAddEdit");
-}
+var content = ConvertToMultipartFormData(staff);
 ```
-### Save
+### Function
 ```csharp
-[HttpPost]
-public async Task<IActionResult> Save(Staff staff)
+#region Convert Form to Multipart Form Data to post record as Form Data instead of application/json.
+public MultipartFormDataContent ConvertToMultipartFormData(Staff staff)
 {
-    staff.DepartmentID = 1;
-    staff.RoleID = 3;
-    if (staff == null)
-    {
-        return View("StaffAddEdit", staff);
-    }
-    if (ModelState.IsValid)
-    {
-        var json = JsonConvert.SerializeObject(staff);
-        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-        if (staff.StaffID > 0)
-        {
-            var response = await _httpClient.PutAsync($"Staffs/PutStaff/{staff.StaffID}", content);
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToAction("Index");
-            }
-            else
-            {
-                return View("StaffAddEdit", staff);
+    var formData = new MultipartFormDataContent();
 
-            }
-        }
-        else
-        {
+    // Add basic properties to form-data
+    formData.Add(new StringContent(staff.StaffID.ToString() ?? ""), "StaffID");
+    formData.Add(new StringContent(staff.StaffName ?? ""), "StaffName");
+    formData.Add(new StringContent(staff.Email ?? ""), "Email");
+    formData.Add(new StringContent(staff.DepartmentID.ToString() ?? ""), "DepartmentID");
+    formData.Add(new StringContent(staff.RoleID.ToString() ?? ""), "RoleID");
+    formData.Add(new StringContent(staff.MobileNumber ?? ""), "MobileNumber");
+    formData.Add(new StringContent(staff.PhotoPath ?? ""), "PhotoPath");
+    formData.Add(new StringContent(staff.IsActive.ToString() ?? ""), "IsActive");
+    formData.Add(new StringContent(staff.Password ?? ""), "Password");
+    formData.Add(new StringContent(staff.Remarks ?? ""), "Remarks");
 
-            var response = await _httpClient.PostAsync("Staffs/PostStaff", content);
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToAction("Index");
-            }
-            else
-            {
-                return View("StaffAddEdit", staff);
-            }
-        }
-    }
-    else
+
+    // Add uploaded file if available
+    if (staff.Photo != null && staff.Photo.Length > 0)
     {
-        return View("StaffAddEdit", staff);
+        var streamContent = new StreamContent(staff.Photo.OpenReadStream());
+        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(staff.Photo.ContentType);
+        formData.Add(streamContent, "File", staff.Photo.FileName);
     }
+
+    return formData;
 }
+
+#endregion
 ```
+
