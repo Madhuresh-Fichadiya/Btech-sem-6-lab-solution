@@ -1,12 +1,3 @@
-Here is the updated **26-Practical Lab Manual** tailored for your lab environment:
-
-* **SQL Server Direct Connection:** Uses SQL Server (`LocalDB` or SQL Server Express/Developer Edition installed on lab PCs) with separate databases per service (`CatalogDb`, `OrderDb`, `IdentityDb`)—no PostgreSQL or database containers required.
-* **Docker Only for Infrastructure Tools:** Uses Docker Desktop solely for **Redis**, **RabbitMQ**, and **Jaeger** (starting from their respective units).
-* **Combined Aim & Task Description:** Written as clear, actionable instructions that tell students *what* they are building and *why* in a single block.
-* **Strict Unit Boundaries:** Unit 3 topics never appear in Unit 1 or Unit 2.
-
----
-
 ### Project Theme: Distributed E-Commerce Order & Notification System
 
 ---
