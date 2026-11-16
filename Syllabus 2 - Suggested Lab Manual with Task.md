@@ -287,3 +287,250 @@
 * **Output Flow:**
 1. Cloud dashboard displays all microservice containers in `Running` status with public HTTPS endpoints exposed on `Gateway.API` and `Notification.API`.
 2. Student runs the complete live workflow against the cloud URL: Register $\rightarrow$ Login $\rightarrow$ Browse Cached Catalog $\rightarrow$ Place Idempotent Order $\rightarrow$ Receive Real-Time SignalR Notification.
+---
+---
+---
+### Practical 2: Developing `Catalog.API` with Entity Framework Core & SQL Server
+
+#### 1. Aim & Task Description
+
+To implement the Product Catalog microservice (`Catalog.API`) responsible for managing product inventory. Students will create the `Product` domain entity (`Id`, `Name`, `Price`, `StockQuantity`, `UpdatedAt`), configure `CatalogDbContext` with Entity Framework Core Code-First migrations connected directly to an isolated SQL Server database (`CatalogDb`), and build RESTful CRUD endpoints (`GET`, `POST`, `PUT`, `DELETE /api/products`).
+
+---
+
+#### 2. Prerequisites & Tools Required
+
+* .NET 8.0 / 9.0 SDK
+* Visual Studio 2022 or VS Code (with C# Dev Kit)
+* SQL Server (LocalDB or SQL Server Express/Developer Edition) & SQL Server Management Studio (SSMS)
+* Swagger UI or Postman for API testing
+* Existing solution `ECommercePlatform.sln` with `Catalog.API` project (from Practical 1)
+
+---
+
+#### 3. Step-by-Step Implementation
+
+##### Step 1: Install Required NuGet Packages
+
+Open the terminal inside the `Catalog.API` project folder and install the Entity Framework Core SQL Server and Design packages:
+
+```bash
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+
+```
+
+##### Step 2: Create the `Product` Entity
+
+Create a folder named `Models` (or `Entities` in the Domain layer) and add `Product.cs`:
+
+```csharp
+namespace Catalog.API.Models;
+
+public class Product
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int StockQuantity { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+```
+
+##### Step 3: Create `CatalogDbContext`
+
+Create a folder named `Data` and add `CatalogDbContext.cs` to map the `Product` entity to SQL Server:
+
+```csharp
+using Catalog.API.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace Catalog.API.Data;
+
+public class CatalogDbContext : DbContext
+{
+    public CatalogDbContext(DbContextOptions<CatalogDbContext> options) : base(options)
+    {
+    }
+
+    public DbSet<Product> Products => Set<Product>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasKey(p => p.Id);
+            entity.Property(p => p.Name).IsRequired().HasMaxLength(150);
+            entity.Property(p => p.Price).HasColumnType("decimal(10,2)");
+        });
+    }
+}
+
+```
+
+##### Step 4: Configure SQL Server Connection String
+
+Open `appsettings.json` in `Catalog.API` and configure the isolated `CatalogDb` connection string:
+
+```json
+{
+  "ConnectionStrings": {
+    "CatalogConnection": "Server=(localdb)\\mssqllocaldb;Database=CatalogDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+```
+
+*(Note: If using SQL Server Express/Developer Edition instead of LocalDB, replace `(localdb)\\mssqllocaldb` with `localhost` or `localhost\\SQLEXPRESS`.)*
+
+##### Step 5: Register `DbContext` and Build CRUD Endpoints
+
+Open `Program.cs` and register `CatalogDbContext` along with the RESTful CRUD endpoints:
+
+```csharp
+using Catalog.API.Data;
+using Catalog.API.Models;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Register EF Core with SQL Server (Database-per-Service)
+builder.Services.AddDbContext<CatalogDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CatalogConnection")));
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+// 1. GET All Products
+app.MapGet("/api/products", async (CatalogDbContext db) =>
+    await db.Products.AsNoTracking().ToListAsync());
+
+// 2. GET Product by ID
+app.MapGet("/api/products/{id:guid}", async (Guid id, CatalogDbContext db) =>
+{
+    var product = await db.Products.FindAsync(id);
+    return product is not null ? Results.Ok(product) : Results.NotFound();
+});
+
+// 3. POST Create Product
+app.MapPost("/api/products", async (Product input, CatalogDbContext db) =>
+{
+    var product = new Product
+    {
+        Id = Guid.NewGuid(),
+        Name = input.Name,
+        Price = input.Price,
+        StockQuantity = input.StockQuantity,
+        UpdatedAt = DateTime.UtcNow
+    };
+
+    db.Products.Add(product);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/api/products/{product.Id}", product);
+});
+
+// 4. PUT Update Product
+app.MapPut("/api/products/{id:guid}", async (Guid id, Product input, CatalogDbContext db) =>
+{
+    var product = await db.Products.FindAsync(id);
+    if (product is null) return Results.NotFound();
+
+    product.Name = input.Name;
+    product.Price = input.Price;
+    product.StockQuantity = input.StockQuantity;
+    product.UpdatedAt = DateTime.UtcNow;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(product);
+});
+
+// 5. DELETE Product
+app.MapDelete("/api/products/{id:guid}", async (Guid id, CatalogDbContext db) =>
+{
+    var product = await db.Products.FindAsync(id);
+    if (product is null) return Results.NotFound();
+
+    db.Products.Remove(product);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.Run();
+
+```
+
+##### Step 6: Generate and Apply Code-First Migrations
+
+Run the following commands in the terminal inside `Catalog.API` to create the `CatalogDb` database and `Products` table in SQL Server:
+
+```bash
+dotnet ef migrations add InitialCatalogCreate
+dotnet ef database update
+
+```
+
+---
+
+#### 4. Output & Verification Flow
+
+Students must perform and document the following verification steps in their lab manual:
+
+1. **Database Schema Verification (SSMS):**
+* Connect to SQL Server in SSMS, expand `Databases -> CatalogDb -> Tables`, and confirm `dbo.Products` and `dbo.__EFMigrationsHistory` exist.
+
+
+2. **Create Product (`POST /api/products`):**
+* Execute a `POST` request via Swagger/Postman with JSON body:
+```json
+{
+  "name": "Mechanical Keyboard",
+  "price": 2500.00,
+  "stockQuantity": 20
+}
+
+```
+
+
+* **Expected Result:** HTTP `201 Created` with a newly generated `id` (GUID) and `updatedAt` timestamp.
+
+
+3. **Read Products (`GET /api/products` & `GET /api/products/{id}`):**
+* Call `GET /api/products` and confirm `"Mechanical Keyboard"` is returned with HTTP `200 OK`.
+
+
+4. **Update Product (`PUT /api/products/{id}`):**
+* Update `price` to `2200.00` and `stockQuantity` to `18` using the generated `id`.
+* **Expected Result:** HTTP `200 OK` reflecting the updated values and refreshed `updatedAt` timestamp.
+
+
+5. **Delete Product (`DELETE /api/products/{id}`):**
+* Call `DELETE /api/products/{id}` and verify HTTP `204 No Content`. Subsequent `GET /api/products/{id}` calls return HTTP `404 Not Found`.
+
+
+
+---
+
+#### 5. Lab Viva / Review Questions
+
+1. Why does `Catalog.API` use its own separate database (`CatalogDb`) instead of sharing a single database with `Order.API`?
+2. What is the purpose of configuring `HasColumnType("decimal(10,2)")` on the `Price` property in `OnModelCreating`?
+3. Why is `AsNoTracking()` used in the `GET /api/products` endpoint?
