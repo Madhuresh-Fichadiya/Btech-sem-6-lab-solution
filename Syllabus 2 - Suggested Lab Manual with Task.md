@@ -290,247 +290,154 @@
 ---
 ---
 ---
-### Practical 2: Developing `Catalog.API` with Entity Framework Core & SQL Server
-
-#### 1. Aim & Task Description
-
-To implement the Product Catalog microservice (`Catalog.API`) responsible for managing product inventory. Students will create the `Product` domain entity (`Id`, `Name`, `Price`, `StockQuantity`, `UpdatedAt`), configure `CatalogDbContext` with Entity Framework Core Code-First migrations connected directly to an isolated SQL Server database (`CatalogDb`), and build RESTful CRUD endpoints (`GET`, `POST`, `PUT`, `DELETE /api/products`).
+Here are all **26 practicals** written in your exact format (**Title**, **Aim**, and **Task Description** only—no code solutions), aligned to the **E-Commerce Order & Notification System** using direct **SQL Server** connections and strict unit boundaries.
 
 ---
 
-#### 2. Prerequisites & Tools Required
+### Unit 1: Microservices & Design Architecture (Practicals 1 – 5)
 
-* .NET 8.0 / 9.0 SDK
-* Visual Studio 2022 or VS Code (with C# Dev Kit)
-* SQL Server (LocalDB or SQL Server Express/Developer Edition) & SQL Server Management Studio (SSMS)
-* Swagger UI or Postman for API testing
-* Existing solution `ECommercePlatform.sln` with `Catalog.API` project (from Practical 1)
+#### Practical 1: Scaffolding a Multi-Service Solution with Database-per-Service Architecture
 
----
+* **Aim:** To scaffold a multi-service ASP.NET Core Web API solution (`Catalog.API` and `Order.API`) following Clean Architecture and the Database-per-Service pattern using SQL Server.
+* **Task Description:** Create a blank .NET solution (`ECommercePlatform.sln`) containing two independent Web API projects (`Catalog.API` and `Order.API`) organized into Domain, Application, Infrastructure, and API layers. Configure separate SQL Server connection strings in each project's `appsettings.json` (`CatalogDb` and `OrderDb`) so each microservice maintains isolated persistence without sharing tables or foreign keys.
 
-#### 3. Step-by-Step Implementation
+#### Practical 2: Developing `Catalog.API` with Entity Framework Core & SQL Server
 
-##### Step 1: Install Required NuGet Packages
+* **Aim:** To implement the Product Catalog microservice (`Catalog.API`) with its own SQL Server database (`CatalogDb`) using Entity Framework Core Code-First migrations and expose CRUD endpoints.
+* **Task Description:** Create the `Product` entity (`Id`, `Name`, `Price`, `StockQuantity`, `UpdatedAt`), configure `CatalogDbContext` with EF Core Code-First migrations against SQL Server (`CatalogDb`), and build RESTful CRUD endpoints (`GET`, `POST`, `PUT`, `DELETE /api/products`) to manage product catalog inventory.
 
-Open the terminal inside the `Catalog.API` project folder and install the Entity Framework Core SQL Server and Design packages:
+#### Practical 3: Developing `Order.API` with Isolated Persistence
 
-```bash
-dotnet add package Microsoft.EntityFrameworkCore.SqlServer
-dotnet add package Microsoft.EntityFrameworkCore.Tools
+* **Aim:** To implement the Order Management microservice (`Order.API`) backed by its own isolated SQL Server database (`OrderDb`) without cross-database dependencies.
+* **Task Description:** Create the `Order` entity (`Id`, `UserId`, `ProductId`, `ProductName`, `Quantity`, `TotalAmount`, `Status`, `InvoiceUrl`, `CreatedAt`) storing `ProductId` and `UserId` as standalone `Guid` values without cross-database foreign keys. Apply EF Core migrations to generate the `Orders` table in `OrderDb` and expose `POST /api/orders` and `GET /api/orders/{id}` endpoints.
 
-```
+#### Practical 4: Synchronous Service-to-Service Communication using Typed `HttpClient`
 
-##### Step 2: Create the `Product` Entity
+* **Aim:** To implement synchronous inter-service communication between `Order.API` and `Catalog.API` using a typed `HttpClient` so `Order.API` can validate real-time product pricing and stock availability before creating an order.
+* **Task Description:** Register a typed `ICatalogServiceClient` via `IHttpClientFactory` in `Order.API` configured with `Catalog.API`'s base URL. Inside `POST /api/orders`, invoke `GET /api/products/{id}` on `Catalog.API` to verify that the requested product exists (`200 OK`) and has sufficient inventory (`StockQuantity >= RequestedQuantity`). Calculate `TotalAmount` dynamically using the live price returned by `Catalog.API`, save the order as `Pending` in `OrderDb`, and reject requests with `404 Not Found` or `400 Bad Request` when the product is missing or out of stock.
 
-Create a folder named `Models` (or `Entities` in the Domain layer) and add `Product.cs`:
+#### Practical 5: High-Performance Inter-Service Communication using gRPC
 
-```csharp
-namespace Catalog.API.Models;
-
-public class Product
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public int StockQuantity { get; set; }
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-}
-
-```
-
-##### Step 3: Create `CatalogDbContext`
-
-Create a folder named `Data` and add `CatalogDbContext.cs` to map the `Product` entity to SQL Server:
-
-```csharp
-using Catalog.API.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace Catalog.API.Data;
-
-public class CatalogDbContext : DbContext
-{
-    public CatalogDbContext(DbContextOptions<CatalogDbContext> options) : base(options)
-    {
-    }
-
-    public DbSet<Product> Products => Set<Product>();
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Product>(entity =>
-        {
-            entity.HasKey(p => p.Id);
-            entity.Property(p => p.Name).IsRequired().HasMaxLength(150);
-            entity.Property(p => p.Price).HasColumnType("decimal(10,2)");
-        });
-    }
-}
-
-```
-
-##### Step 4: Configure SQL Server Connection String
-
-Open `appsettings.json` in `Catalog.API` and configure the isolated `CatalogDb` connection string:
-
-```json
-{
-  "ConnectionStrings": {
-    "CatalogConnection": "Server=(localdb)\\mssqllocaldb;Database=CatalogDb;Trusted_Connection=True;TrustServerCertificate=True;"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*"
-}
-
-```
-
-*(Note: If using SQL Server Express/Developer Edition instead of LocalDB, replace `(localdb)\\mssqllocaldb` with `localhost` or `localhost\\SQLEXPRESS`.)*
-
-##### Step 5: Register `DbContext` and Build CRUD Endpoints
-
-Open `Program.cs` and register `CatalogDbContext` along with the RESTful CRUD endpoints:
-
-```csharp
-using Catalog.API.Data;
-using Catalog.API.Models;
-using Microsoft.EntityFrameworkCore;
-
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Register EF Core with SQL Server (Database-per-Service)
-builder.Services.AddDbContext<CatalogDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("CatalogConnection")));
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-// 1. GET All Products
-app.MapGet("/api/products", async (CatalogDbContext db) =>
-    await db.Products.AsNoTracking().ToListAsync());
-
-// 2. GET Product by ID
-app.MapGet("/api/products/{id:guid}", async (Guid id, CatalogDbContext db) =>
-{
-    var product = await db.Products.FindAsync(id);
-    return product is not null ? Results.Ok(product) : Results.NotFound();
-});
-
-// 3. POST Create Product
-app.MapPost("/api/products", async (Product input, CatalogDbContext db) =>
-{
-    var product = new Product
-    {
-        Id = Guid.NewGuid(),
-        Name = input.Name,
-        Price = input.Price,
-        StockQuantity = input.StockQuantity,
-        UpdatedAt = DateTime.UtcNow
-    };
-
-    db.Products.Add(product);
-    await db.SaveChangesAsync();
-
-    return Results.Created($"/api/products/{product.Id}", product);
-});
-
-// 4. PUT Update Product
-app.MapPut("/api/products/{id:guid}", async (Guid id, Product input, CatalogDbContext db) =>
-{
-    var product = await db.Products.FindAsync(id);
-    if (product is null) return Results.NotFound();
-
-    product.Name = input.Name;
-    product.Price = input.Price;
-    product.StockQuantity = input.StockQuantity;
-    product.UpdatedAt = DateTime.UtcNow;
-
-    await db.SaveChangesAsync();
-    return Results.Ok(product);
-});
-
-// 5. DELETE Product
-app.MapDelete("/api/products/{id:guid}", async (Guid id, CatalogDbContext db) =>
-{
-    var product = await db.Products.FindAsync(id);
-    if (product is null) return Results.NotFound();
-
-    db.Products.Remove(product);
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
-app.Run();
-
-```
-
-##### Step 6: Generate and Apply Code-First Migrations
-
-Run the following commands in the terminal inside `Catalog.API` to create the `CatalogDb` database and `Products` table in SQL Server:
-
-```bash
-dotnet ef migrations add InitialCatalogCreate
-dotnet ef database update
-
-```
+* **Aim:** To implement a binary gRPC endpoint in `Catalog.API` for fast product availability checks and compare its payload size and latency against REST/JSON.
+* **Task Description:** Define a `catalog.proto` contract (`CheckProductAvailability`), generate C# server and client stubs using `Grpc.AspNetCore`, host the gRPC service inside `Catalog.API`, and configure a gRPC client in `Order.API` to fetch product price and stock over HTTP/2 Protobuf.
 
 ---
 
-#### 4. Output & Verification Flow
+### Unit 2: Caching, Rate Limiting, Logging and Security (Practicals 6 – 11)
 
-Students must perform and document the following verification steps in their lab manual:
+#### Practical 6: Distributed Read-Through Caching & Cache Invalidation with Redis
 
-1. **Database Schema Verification (SSMS):**
-* Connect to SQL Server in SSMS, expand `Databases -> CatalogDb -> Tables`, and confirm `dbo.Products` and `dbo.__EFMigrationsHistory` exist.
+* **Aim:** To reduce SQL Server query load and accelerate product read operations in `Catalog.API` using Redis distributed caching and cache invalidation.
+* **Task Description:** Run a Redis instance on port `6379` and register `AddStackExchangeRedisCache` in `Catalog.API`. Update `GET /api/products/{id}` to check Redis (`product:{id}`) before querying SQL Server, caching misses with a 5-minute expiration, and explicitly remove the Redis cache key whenever `PUT` or `DELETE` modifies or deletes a product.
 
+#### Practical 7: Implementing Fixed Window Rate Limiting on `Catalog.API`
 
-2. **Create Product (`POST /api/products`):**
-* Execute a `POST` request via Swagger/Postman with JSON body:
-```json
-{
-  "name": "Mechanical Keyboard",
-  "price": 2500.00,
-  "stockQuantity": 20
-}
+* **Aim:** To protect public product browsing endpoints in `Catalog.API` from scraping and traffic spikes using the Fixed Window rate limiting algorithm.
+* **Task Description:** Configure ASP.NET Core's `AddFixedWindowLimiter` middleware in `Catalog.API` partitioned by client IP address, permitting a maximum of `5 requests per 30 seconds` with `QueueLimit = 0`, and return HTTP `429 Too Many Requests` with a `Retry-After` header when the limit is exceeded.
 
-```
+#### Practical 8: Implementing Token Bucket Rate Limiting on `Order.API`
 
+* **Aim:** To control order submission bursts in `Order.API` using the Token Bucket rate limiting algorithm and compare its traffic-smoothing behavior against Fixed Window limiting.
+* **Task Description:** Configure `AddTokenBucketLimiter` on `POST /api/orders` with `TokenLimit = 4`, `TokensPerPeriod = 1`, and `ReplenishmentPeriod = 10 seconds` to allow short bursts of order submissions while gradually replenishing capacity over time.
 
-* **Expected Result:** HTTP `201 Created` with a newly generated `id` (GUID) and `updatedAt` timestamp.
+#### Practical 9: Structured Logging & Correlation ID Propagation with Serilog
 
+* **Aim:** To replace plain-text logs with structured JSON logging using Serilog and trace requests across microservices via an `X-Correlation-ID` header.
+* **Task Description:** Configure `Serilog.AspNetCore` in both `Catalog.API` and `Order.API`. Implement custom middleware that reads or generates an `X-Correlation-ID` header on incoming requests, pushes it into Serilog's `LogContext`, and forwards the header automatically via a `DelegatingHandler` on outgoing `HttpClient` calls.
 
-3. **Read Products (`GET /api/products` & `GET /api/products/{id}`):**
-* Call `GET /api/products` and confirm `"Mechanical Keyboard"` is returned with HTTP `200 OK`.
+#### Practical 10: Building `Identity.API` for JWT Token Issuance
 
+* **Aim:** To implement a dedicated Authentication microservice (`Identity.API`) connected to SQL Server (`IdentityDb`) that authenticates users and issues signed JSON Web Tokens (JWT).
+* **Task Description:** Create `Identity.API` with a `Users` table (`Id`, `FullName`, `Email`, `PasswordHash`, `Role`) in `IdentityDb`. Implement `POST /api/auth/register` with secure password hashing and `POST /api/auth/login` to generate HMAC-SHA256 signed JWT access tokens embedding `sub` (UserId), `email`, and `role` (`Admin` or `Customer`) claims.
 
-4. **Update Product (`PUT /api/products/{id}`):**
-* Update `price` to `2200.00` and `stockQuantity` to `18` using the generated `id`.
-* **Expected Result:** HTTP `200 OK` reflecting the updated values and refreshed `updatedAt` timestamp.
+#### Practical 11: Securing Microservice Endpoints with JWT & Role-Based Authorization
 
-
-5. **Delete Product (`DELETE /api/products/{id}`):**
-* Call `DELETE /api/products/{id}` and verify HTTP `204 No Content`. Subsequent `GET /api/products/{id}` calls return HTTP `404 Not Found`.
-
-
+* **Aim:** To protect `Catalog.API` and `Order.API` endpoints using JWT Bearer authentication and enforce role-based authorization policies (`Admin` vs. `Customer`).
+* **Task Description:** Configure `AddAuthentication().AddJwtBearer()` in both `Catalog.API` and `Order.API` using the shared JWT signing key. Restrict product creation, updates, and deletion (`POST`, `PUT`, `DELETE /api/products`) to `[Authorize(Roles = "Admin")]` and restrict order placement (`POST /api/orders`) to `[Authorize(Roles = "Customer")]`, extracting `UserId` directly from the authenticated JWT claims.
 
 ---
 
-#### 5. Lab Viva / Review Questions
+### Unit 3: API Gateway, Resilience and Distributed Systems (Practicals 12 – 17)
 
-1. Why does `Catalog.API` use its own separate database (`CatalogDb`) instead of sharing a single database with `Order.API`?
-2. What is the purpose of configuring `HasColumnType("decimal(10,2)")` on the `Price` property in `OnModelCreating`?
-3. Why is `AsNoTracking()` used in the `GET /api/products` endpoint?
+#### Practical 12: Creating a Single Entry Point using Ocelot API Gateway
+
+* **Aim:** To hide internal microservice ports behind a single unified entry point (`Gateway.API`) using Ocelot and centralize upstream routing and JWT validation.
+* **Task Description:** Create a `Gateway.API` project using the `Ocelot` package, configure `ocelot.json` to map upstream routes (`/gateway/catalog/{everything}`, `/gateway/orders/{everything}`, `/gateway/auth/{everything}`) to their downstream microservice ports, and enforce JWT Bearer validation at the Gateway layer.
+
+#### Practical 13: Implementing Retry & Timeout Resilience Policies using Polly
+
+* **Aim:** To make synchronous HTTP calls between `Order.API` and `Catalog.API` resilient against transient network failures using Exponential Backoff Retries and Timeouts.
+* **Task Description:** Attach `AddStandardResilienceHandler()` (`Microsoft.Extensions.Http.Resilience` / Polly) to `ICatalogServiceClient` in `Order.API`. Configure 3 exponential backoff retry attempts (`200ms`, `400ms`, `800ms`) for transient `5xx` or timeout failures along with a strict `2-second` per-attempt timeout.
+
+#### Practical 14: Implementing Circuit Breaker & Graceful Degradation
+
+* **Aim:** To prevent cascading failures when `Catalog.API` experiences prolonged downtime by configuring a Polly Circuit Breaker policy in `Order.API`.
+* **Task Description:** Configure a Circuit Breaker strategy on `ICatalogServiceClient` that trips to the `Open` state for `20 seconds` if 50% of requests fail within a 15-second sampling window. Catch `BrokenCircuitException` in `Order.API` to immediately return a graceful HTTP `503 Service Unavailable` fallback response without waiting for network timeouts.
+
+#### Practical 15: Handling Duplicate Requests using Redis Idempotency Keys
+
+* **Aim:** To prevent duplicate order creation when clients retry timed-out requests by implementing an Idempotency filter in `Order.API` backed by Redis.
+* **Task Description:** Build an `IdempotencyFilter` in `Order.API` that requires an `Idempotency-Key` header on `POST /api/orders`. Check Redis (`idempotency:{userId}:{key}`) before executing the handler; if found, return the cached HTTP status code and JSON response immediately, otherwise execute the order creation and cache the result in Redis for 24 hours.
+
+#### Practical 16: Implementing Distributed Transactions via Choreography Saga
+
+* **Aim:** To maintain eventual data consistency across `OrderDb` and `CatalogDb` without distributed two-phase commit locks using an event-driven Choreography Saga.
+* **Task Description:** Refactor order fulfillment into a Choreography Saga where `Order.API` saves the order in `Pending` state and publishes `OrderCreatedEvent`. `Catalog.API` consumes the event, deducts `StockQuantity` in `CatalogDb`, and publishes either `StockReservedEvent` or `StockReservationFailedEvent`, prompting `Order.API` to transition the order to `Confirmed` or run a compensating update to `Cancelled`.
+
+#### Practical 17: End-to-End Distributed Tracing with OpenTelemetry and Jaeger
+
+* **Aim:** To trace a single distributed request across Ocelot, HTTP calls, SQL Server, Redis, and message queues using OpenTelemetry and Jaeger.
+* **Task Description:** Run a Jaeger container (`http://localhost:16686`) and instrument `Gateway.API`, `Order.API`, and `Catalog.API` with OpenTelemetry (`OpenTelemetry.Extensions.Hosting`) to capture ASP.NET Core, `HttpClient`, and EF Core trace spans, exporting them via OTLP to visualize the unified waterfall timeline.
+
+---
+
+### Unit 4: Background Jobs, Queuing & Messaging (Practicals 18 – 21)
+
+#### Practical 18: Asynchronous Producer–Consumer Messaging with RabbitMQ & MassTransit
+
+* **Aim:** To decouple microservices using asynchronous message-oriented communication with RabbitMQ and MassTransit.
+* **Task Description:** Configure RabbitMQ (`ports 5672 / 15672`) with MassTransit across `Order.API` and `Catalog.API`. Define durable exchanges, queues, producers, and consumers for order and inventory events so messages are buffered safely in RabbitMQ even when a consumer service is temporarily offline.
+
+#### Practical 19: Fault-Tolerant Message Consumption & Dead-Letter Queues (DLQ)
+
+* **Aim:** To handle poison messages and transient database errors during queue consumption using retry policies and Dead-Letter Queues in RabbitMQ.
+* **Task Description:** Configure `UseMessageRetry` with progressive intervals on MassTransit consumers in `Catalog.API` and `Order.API`. Simulate an unhandled consumer exception to verify that failed messages are retried and subsequently routed to RabbitMQ's `*_error` Dead-Letter Queue without blocking valid messages.
+
+#### Practical 20: Background Job Processing & Fire-and-Forget Jobs using Hangfire
+
+* **Aim:** To offload non-blocking post-order invoice generation from the checkout API response path using Hangfire backed by SQL Server.
+* **Task Description:** Install `Hangfire.AspNetCore` and `Hangfire.SqlServer` in `Order.API`, expose the `/hangfire` monitoring dashboard, and enqueue a Fire-and-Forget background job (`BackgroundJob.Enqueue`) upon order confirmation to generate an invoice file and update `Orders.InvoiceUrl` in `OrderDb`.
+
+#### Practical 21: Automating Order Expiration & Reports using Hangfire Delayed & Recurring Jobs
+
+* **Aim:** To automate unpaid order cancellation using Hangfire Delayed Jobs and daily revenue reporting using CRON Recurring Jobs.
+* **Task Description:** Schedule a Hangfire Delayed Job (`BackgroundJob.Schedule`) when an order is created in `Pending` state that automatically marks the order `Cancelled` if it remains unconfirmed after a set timeout, and register a daily CRON Recurring Job (`RecurringJob.AddOrUpdate`) that aggregates confirmed daily sales totals.
+
+---
+
+### Unit 5: Cloud & Realtime Communication (Practicals 22 – 26)
+
+#### Practical 22: Building an Authenticated Real-Time Hub using ASP.NET Core SignalR
+
+* **Aim:** To build a `Notification.API` microservice featuring an authenticated ASP.NET Core SignalR Hub for real-time WebSocket client connections.
+* **Task Description:** Create `Notification.API` containing an `[Authorize]` SignalR Hub (`OrderTrackingHub`). Configure `JwtBearerEvents.OnMessageReceived` to extract the JWT access token from the `?access_token=` query string during WebSocket handshakes so connected clients are mapped automatically via `Context.UserIdentifier`.
+
+#### Practical 23: Pushing Live RabbitMQ Saga Updates to Clients via SignalR
+
+* **Aim:** To connect backend RabbitMQ Saga events to SignalR so users receive instant live browser notifications when their order status changes.
+* **Task Description:** Add MassTransit consumers in `Notification.API` listening to `StockReservedEvent` and `StockReservationFailedEvent`. Inject `IHubContext<OrderTrackingHub>` into the consumers and invoke `Clients.User(userId).SendAsync("OrderStatusUpdated", payload)` to deliver real-time confirmation or cancellation alerts exclusively to the ordering user.
+
+#### Practical 24: Containerizing Microservices using Multi-Stage Dockerfiles
+
+* **Aim:** To package all microservices into lightweight Linux container images using multi-stage Dockerfiles and externalized environment configurations.
+* **Task Description:** Write multi-stage `Dockerfile`s (`[mcr.microsoft.com/dotnet/sdk](https://mcr.microsoft.com/dotnet/sdk)` build stage $\rightarrow$ `[mcr.microsoft.com/dotnet/aspnet](https://mcr.microsoft.com/dotnet/aspnet)` runtime stage) for `Gateway.API`, `Identity.API`, `Catalog.API`, `Order.API`, and `Notification.API`, externalizing all SQL Server, Redis, RabbitMQ, and JWT settings via environment variables.
+
+#### Practical 25: Cloud Architecture Design & Service Mapping (Azure vs. AWS)
+
+* **Aim:** To analyze IaaS, PaaS, and SaaS cloud service models and design a cloud deployment blueprint mapping local lab components to managed PaaS offerings on Microsoft Azure and AWS.
+* **Task Description:** Prepare a cloud architecture specification comparing IaaS virtual machines against managed PaaS services across Azure and AWS—mapping containers to Azure Container Apps / AWS ECS Fargate, databases to Azure SQL Database / Amazon RDS for SQL Server, caching to Azure Cache for Redis / Amazon ElastiCache, and messaging to Azure Service Bus / Amazon MQ—and validate `.env` configuration overrides locally.
+
+#### Practical 26: Deploying Microservices to the Cloud (Azure Container Apps / AWS ECS)
+
+* **Aim:** To deploy the containerized microservices to a cloud container platform, connect managed cloud database and cache instances, and verify live end-to-end execution.
+* **Task Description:** Push the microservice container images to a container registry (Docker Hub / Azure Container Registry / Amazon ECR), provision managed cloud SQL Server and Redis instances, deploy the Gateway and backend microservices to Azure Container Apps (or AWS ECS Fargate), and execute an end-to-end test verifying authentication, cached browsing, idempotent ordering, and live SignalR notifications over public HTTPS endpoints.
