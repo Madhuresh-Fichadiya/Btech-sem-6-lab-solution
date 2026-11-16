@@ -1,11 +1,3 @@
-Here is the complete **26-Practical Lab Manual** structured strictly unit-by-unit for 3rd-year B.Tech CSE students.
-
-* **No .NET Aspire:** Standard `docker-compose.yml` is used so students learn real infrastructure networking.
-* **Strict Unit Boundaries:** Unit 3 topics (Ocelot, Polly, Idempotency, Saga, OpenTelemetry) do not appear in Unit 1 or Unit 2.
-* **Lab-Ready Format:** Every practical includes a **Title**, plain-English **Aim**, **Description** (what students actually build), and **Output Flow** (step-by-step execution and verification for lab evaluation).
-
----
-
 ### Unit 1: Microservices & Design Architecture (Practicals 1 – 5)
 
 *(Focus: Distributed system basics, Docker infrastructure, Database-per-Service, and synchronous REST/gRPC communication)*
